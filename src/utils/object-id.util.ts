@@ -43,8 +43,10 @@ export function safeObjectIdToString(id: unknown): string {
       return JSON.stringify(id);
     }
 
-    // Fallback - use String constructor for any other type
-    return String(id);
+    // Fallback for other types (symbol, function, etc.)
+    // Instead of using String(id) which can cause linting issues,
+    // we'll return a descriptive string of the type
+    return `[${typeof id}]`;
   } catch (error) {
     console.error('Error converting id to string:', error);
     return '';

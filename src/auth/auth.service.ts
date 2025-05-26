@@ -49,8 +49,8 @@ export class AuthService {
         if (typeof user.toObject !== 'function') {
           throw new Error('User object does not have toObject method');
         }
-        // Now we can safely call it
-        const userObj = user.toObject();
+        // Now we can safely call it with a specific return type
+        const userObj = user.toObject() as Record<string, unknown>;
         const {
           password_hash: _ph,
           hashedRefreshToken: _hrt,
