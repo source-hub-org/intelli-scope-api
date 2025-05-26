@@ -37,7 +37,19 @@ export class UsersService {
     }
 
     const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // Safely handle bcrypt.hash with proper error handling
+    let hashedPassword: string;
+    try {
+      // With our type definition, this is now properly typed
+      hashedPassword = await bcrypt.hash(password, saltRounds);
+    } catch (error) {
+      console.error('Error hashing password:', error);
+      throw new InternalServerErrorException(
+        this.i18n.t('translation.USER.CREATE_ERROR', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
 
     const createdUser = new this.userModel({
       email: email.toLowerCase(),
@@ -47,8 +59,12 @@ export class UsersService {
 
     try {
       const savedUser = await createdUser.save();
-      const { password_hash, hashedRefreshToken, ...result } =
-        savedUser.toObject();
+      // Destructure and ignore unused variables with underscore prefix
+      const {
+        password_hash: _ph,
+        hashedRefreshToken: _hrt,
+        ...result
+      } = savedUser.toObject();
       // We need to cast to unknown first to avoid TypeScript error
       return result as unknown as Omit<
         UserDocument,
@@ -56,7 +72,14 @@ export class UsersService {
       >;
     } catch (error) {
       // Handle MongoDB errors (e.g., duplicate key if unique constraint somehow missed)
-      if (error.code === 11000) {
+      // Type assertion with type guard for error object
+      const mongoError = error as Record<string, unknown>;
+      if (
+        mongoError &&
+        typeof mongoError === 'object' &&
+        'code' in mongoError &&
+        mongoError.code === 11000
+      ) {
         throw new ConflictException(
           this.i18n.t('translation.USER.EMAIL_EXISTS_DB_ERROR', {
             lang: I18nContext.current()?.lang,
@@ -129,12 +152,24 @@ export class UsersService {
 
     if (updateUserDto.password) {
       const saltRounds = 10;
-      updateData.password_hash = await bcrypt.hash(
-        updateUserDto.password,
-        saltRounds,
-      );
+      // Safely handle bcrypt.hash with proper error handling
+      try {
+        // With our type definition, this is now properly typed
+        updateData.password_hash = await bcrypt.hash(
+          updateUserDto.password,
+          saltRounds,
+        );
+      } catch (error) {
+        console.error('Error hashing password during update:', error);
+        throw new InternalServerErrorException(
+          this.i18n.t('translation.USER.UPDATE_ERROR', {
+            lang: I18nContext.current()?.lang,
+          }),
+        );
+      }
       // Remove password from updateData if it exists
-      const anyUpdateData = updateData as any;
+      // Safely remove password property if it exists
+      const anyUpdateData = updateData as Record<string, unknown>;
       if ('password' in anyUpdateData) {
         delete anyUpdateData.password;
       }
@@ -179,7 +214,19 @@ export class UsersService {
   ): Promise<void> {
     if (refreshToken) {
       const saltRounds = 10;
-      const hashedToken = await bcrypt.hash(refreshToken, saltRounds);
+      // Safely handle bcrypt.hash with proper error handling
+      let hashedToken: string;
+      try {
+        // With our type definition, this is now properly typed
+        hashedToken = await bcrypt.hash(refreshToken, saltRounds);
+      } catch (error) {
+        console.error('Error hashing refresh token:', error);
+        throw new InternalServerErrorException(
+          this.i18n.t('translation.AUTH.TOKEN_PROCESSING_ERROR', {
+            lang: I18nContext.current()?.lang,
+          }),
+        );
+      }
       await this.userModel.findByIdAndUpdate(userId, {
         hashedRefreshToken: hashedToken,
       });

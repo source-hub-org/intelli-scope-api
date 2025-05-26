@@ -54,4 +54,4 @@ function generateOpenApiJson(app: INestApplication, document: any) {
   // });
 }
 
-bootstrap();
+void bootstrap();

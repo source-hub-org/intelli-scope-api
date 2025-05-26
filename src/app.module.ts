@@ -47,7 +47,7 @@ import * as path from 'path';
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
         // Các tùy chọn khác cho Mongoose nếu cần
         // Ví dụ cho DocumentDB (AWS) có thể cần:

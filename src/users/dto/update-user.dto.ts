@@ -1,12 +1,6 @@
-import {
-  IsString,
-  IsEmail,
-  MinLength,
-  IsOptional,
-  IsNotEmpty,
-} from 'class-validator';
+import { IsString, MinLength, IsOptional, IsNotEmpty } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateUserDto {
   @ApiPropertyOptional({

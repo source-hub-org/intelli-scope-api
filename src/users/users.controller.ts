@@ -21,7 +21,6 @@ import { I18n, I18nContext } from 'nestjs-i18n';
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiBody,
   ApiBearerAuth,

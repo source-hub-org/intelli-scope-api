@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { UserDocument } from '../users/schemas/user.schema'; // Import UserDocument
 import { I18nService, I18nContext } from 'nestjs-i18n';
+import { safeObjectIdToString } from '../utils/object-id.util';
 
 export interface TokenPayload {
   userId: string; // Mongoose ID là string
@@ -32,10 +33,32 @@ export class AuthService {
   ): Promise<Omit<UserDocument, 'password_hash' | 'hashedRefreshToken'>> {
     const user = await this.usersService.findOneByEmail(email); // Returns UserDocument (with password_hash)
     if (user && user.password_hash) {
-      const isMatch = await bcrypt.compare(pass, user.password_hash);
+      // Use properly typed bcrypt compare
+      let isMatch = false;
+      try {
+        // With our type definition, this is now properly typed
+        isMatch = await bcrypt.compare(pass, user.password_hash);
+      } catch (error) {
+        console.error('Error comparing passwords:', error);
+        isMatch = false;
+      }
       if (isMatch) {
-        const { password_hash, hashedRefreshToken, ...result } =
-          user.toObject();
+        // Destructure and ignore unused variables with underscore prefix
+        // Use type assertion to avoid unsafe assignment warning
+        // First check if toObject is a function
+        if (typeof user.toObject !== 'function') {
+          throw new Error('User object does not have toObject method');
+        }
+        // Now we can safely call it
+        const userObj = user.toObject();
+        const {
+          password_hash: _ph,
+          hashedRefreshToken: _hrt,
+          ...result
+        } = userObj as Omit<
+          UserDocument,
+          'password_hash' | 'hashedRefreshToken'
+        > & { password_hash: string; hashedRefreshToken?: string };
         return result as Omit<
           UserDocument,
           'password_hash' | 'hashedRefreshToken'
@@ -124,7 +147,8 @@ export class AuthService {
     user: Omit<UserDocument, 'password_hash' | 'hashedRefreshToken'>,
   ) {
     // User ID from Mongoose is an object, need to convert to string if necessary
-    const userId = user._id ? user._id.toString() : '';
+    // Convert ObjectId to string using our utility function
+    const userId = safeObjectIdToString(user._id);
     const tokens = await this.getTokens(userId, user.email);
     await this.usersService.setCurrentRefreshToken(
       userId,
@@ -135,7 +159,12 @@ export class AuthService {
       message: this.i18n.t('translation.AUTH.LOGIN_SUCCESS', {
         lang: I18nContext.current()?.lang,
       }),
-      user: { id: user._id, email: user.email, name: user.name },
+      user: {
+        // Safely convert ObjectId to string using our utility function
+        id: safeObjectIdToString(user._id),
+        email: user.email,
+        name: user.name,
+      },
       ...tokens,
     };
   }
@@ -150,10 +179,18 @@ export class AuthService {
       );
     }
 
-    const isRefreshTokenMatching = await bcrypt.compare(
-      currentRefreshToken,
-      user.hashedRefreshToken,
-    );
+    // Use properly typed bcrypt compare
+    let isRefreshTokenMatching = false;
+    try {
+      // With our type definition, this is now properly typed
+      isRefreshTokenMatching = await bcrypt.compare(
+        currentRefreshToken,
+        user.hashedRefreshToken,
+      );
+    } catch (error) {
+      console.error('Error comparing refresh tokens:', error);
+      isRefreshTokenMatching = false;
+    }
     if (!isRefreshTokenMatching) {
       throw new ForbiddenException(
         this.i18n.t('translation.AUTH.ACCESS_DENIED', {
@@ -162,7 +199,8 @@ export class AuthService {
       );
     }
 
-    const userIdStr = user._id ? user._id.toString() : '';
+    // Convert ObjectId to string using our utility function
+    const userIdStr = safeObjectIdToString(user._id);
     const tokens = await this.getTokens(userIdStr, user.email);
     await this.usersService.setCurrentRefreshToken(
       userIdStr,

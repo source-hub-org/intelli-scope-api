@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import * as bcrypt from 'bcrypt';
+// import * as bcrypt from 'bcrypt';
 
 export type UserDocument = User & Document;
 
@@ -24,7 +24,7 @@ export class User {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 // Middleware để hash password trước khi lưu
-UserSchema.pre<UserDocument>('save', async function (next) {
+UserSchema.pre<UserDocument>('save', function (next) {
   // Chỉ hash password nếu nó đã được thay đổi (hoặc là user mới)
   if (!this.isModified('password_hash')) {
     return next();

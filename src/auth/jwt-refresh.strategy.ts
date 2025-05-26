@@ -44,8 +44,17 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
     });
   }
 
-  async validate(req: Request, payload: RefreshTokenPayload): Promise<any> {
-    const refreshTokenFromBody = req.body.refresh_token;
+  async validate(
+    req: Request,
+    payload: RefreshTokenPayload,
+  ): Promise<{
+    userId: string;
+    email: string;
+    refreshToken: string;
+  }> {
+    // Type assertion for req.body to avoid unsafe member access
+    const refreshTokenFromBody = (req.body as { refresh_token?: string })
+      .refresh_token;
     if (!refreshTokenFromBody) {
       throw new UnauthorizedException(
         this.i18n.t('translation.AUTH.ACCESS_DENIED', {
@@ -65,10 +74,18 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
       );
     }
 
-    const isRefreshTokenMatching = await bcrypt.compare(
-      refreshTokenFromBody,
-      user.hashedRefreshToken,
-    );
+    // Use properly typed bcrypt compare
+    let isRefreshTokenMatching = false;
+    try {
+      // With our type definition, this is now properly typed
+      isRefreshTokenMatching = await bcrypt.compare(
+        refreshTokenFromBody,
+        user.hashedRefreshToken,
+      );
+    } catch (error) {
+      console.error('Error comparing refresh tokens:', error);
+      isRefreshTokenMatching = false;
+    }
     if (!isRefreshTokenMatching) {
       throw new ForbiddenException(
         this.i18n.t('translation.AUTH.ACCESS_DENIED', {
@@ -78,6 +95,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
       );
     }
     // Trả về userId và refreshToken để AuthService sử dụng
+    // Return a properly typed object
     return {
       userId: payload.userId,
       email: user.email,

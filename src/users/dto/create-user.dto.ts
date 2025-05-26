@@ -62,11 +62,39 @@ export class CreateUserDto {
       'translation.VALIDATION.PASSWORD_CONFIRMATION_NOT_EMPTY',
     ),
   })
-  @ValidateIf((o) => o.password !== undefined) // Chỉ validate nếu password tồn tại
+  @ValidateIf(
+    (o: Record<string, unknown>) =>
+      typeof o === 'object' &&
+      o !== null &&
+      'password' in o &&
+      o.password !== undefined,
+  ) // Only validate if password exists
   @Matches(/^.*$/, {
     message: (args) => {
-      const obj = args.object as { password: string };
-      if (obj.password !== args.value) {
+      // Type assertion with type guard to ensure password exists
+      if (!args || typeof args !== 'object' || !args.object) {
+        return '';
+      }
+
+      // Define a type guard function to check if an object has a password property
+      function hasPassword(obj: unknown): obj is { password: string } {
+        // First check if it's an object
+        if (typeof obj !== 'object' || obj === null) {
+          return false;
+        }
+
+        // Then check if it has a password property
+        if (!('password' in obj)) {
+          return false;
+        }
+
+        // Finally check if the password is a string
+        const typedObj = obj as Record<string, unknown>;
+        return typeof typedObj.password === 'string';
+      }
+
+      // Use the type guard to safely access the password
+      if (hasPassword(args.object) && args.object.password !== args.value) {
         return i18nValidationMessage(
           'translation.VALIDATION.PASSWORD_CONFIRMATION_MATCH',
         )(args);
