@@ -94,7 +94,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
         }),
       );
     }
-    // Trả về userId và refreshToken để AuthService sử dụng
+    // Return userId and refreshToken for AuthService to use
     // Return a properly typed object
     return {
       userId: payload.userId,

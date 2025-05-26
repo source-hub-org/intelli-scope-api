@@ -161,8 +161,8 @@ export class UsersController {
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard) // Chỉ user tự update mình hoặc admin mới được phép (cần thêm logic role)
-  @Patch(':id') // Trong thực tế, bạn cần kiểm tra xem người dùng có quyền update user này không
+  @UseGuards(JwtAuthGuard) // Only the user updating themselves or an admin should be allowed (need to add role logic)
+  @Patch(':id') // In practice, you need to check if the user has permission to update this user
   async update(
     @Param('id') id: string,
     @Body(
@@ -194,11 +194,11 @@ export class UsersController {
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard) // Chỉ admin mới được phép (cần thêm logic role)
+  @UseGuards(JwtAuthGuard) // Only admin should be allowed (need to add role logic)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     await this.usersService.remove(id);
-    // Không cần trả về message vì status là 204 No Content
+    // No need to return a message because the status is 204 No Content
   }
 }

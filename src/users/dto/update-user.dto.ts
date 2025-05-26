@@ -14,7 +14,7 @@ export class UpdateUserDto {
   })
   readonly name?: string;
 
-  // Thường không cho phép cập nhật email qua endpoint này, hoặc cần xác minh lại
+  // Usually not allowing email updates through this endpoint, or requiring verification
   // @ApiPropertyOptional({
   //   description: 'The email of the user',
   //   example: 'john.doe@example.com',
@@ -35,5 +35,5 @@ export class UpdateUserDto {
       { constraints: [6] },
     ),
   })
-  readonly password?: string; // Nếu muốn cập nhật password
+  readonly password?: string; // If you want to update the password
 }

@@ -5,9 +5,9 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class LocalAuthGuard extends AuthGuard('local') {
-  // Sử dụng strategy 'local'
-  // Bạn có thể override các phương thức như canActivate nếu cần logic phức tạp hơn
-  // Ví dụ: để tự động log attempt hoặc xử lý lỗi theo cách khác
+  // Using 'local' strategy
+  // You can override methods like canActivate if you need more complex logic
+  // Example: to automatically log attempts or handle errors differently
   // canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
   //   // console.log('LocalAuthGuard canActivate called');
   //   return super.canActivate(context);

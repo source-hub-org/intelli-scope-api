@@ -49,8 +49,8 @@ import * as path from 'path';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
-        // Các tùy chọn khác cho Mongoose nếu cần
-        // Ví dụ cho DocumentDB (AWS) có thể cần:
+        // Other options for Mongoose if needed
+        // Example for DocumentDB (AWS) might need:
         // ssl: true,
         // sslValidate: true,
         // sslCA: [fs.readFileSync(configService.get<string>('AWS_RDS_CA_PATH'))],

@@ -129,7 +129,7 @@ export class AuthService {
       this.jwtService.signAsync(
         { userId },
         {
-          // Refresh token có thể chỉ cần userId
+          // Refresh token may only need userId
           secret: refreshTokenSecret,
           expiresIn: refreshTokenExpiresIn,
         },

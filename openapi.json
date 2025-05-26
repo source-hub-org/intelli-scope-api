@@ -514,14 +514,15 @@
         "properties": {
           "email": {
             "type": "string",
+            "format": "email",
             "description": "The email of the user",
             "example": "john.doe@example.com"
           },
           "password": {
             "type": "string",
+            "minLength": 6,
             "description": "The password of the user",
-            "example": "password123",
-            "minLength": 6
+            "example": "password123"
           }
         },
         "required": [
@@ -539,17 +540,19 @@
           },
           "email": {
             "type": "string",
+            "format": "email",
             "description": "The email of the user",
             "example": "john.doe@example.com"
           },
           "password": {
             "type": "string",
+            "minLength": 6,
             "description": "The password of the user",
-            "example": "password123",
-            "minLength": 6
+            "example": "password123"
           },
           "password_confirmation": {
             "type": "string",
+            "pattern": "/^.*$/",
             "description": "Password confirmation that must match the password",
             "example": "password123"
           }
@@ -571,9 +574,9 @@
           },
           "password": {
             "type": "string",
+            "minLength": 6,
             "description": "The new password of the user",
-            "example": "newpassword123",
-            "minLength": 6
+            "example": "newpassword123"
           }
         }
       }

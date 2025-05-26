@@ -129,12 +129,12 @@ export class UsersService {
     >;
   }
 
-  // Hàm này cần trả về user với password_hash để AuthService so sánh
+  // This function needs to return user with password_hash for AuthService to compare
   async findOneByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email: email.toLowerCase() }).exec();
   }
 
-  // Hàm này cần trả về user đầy đủ để AuthService sử dụng
+  // This function needs to return the complete user for AuthService to use
   async findUserByIdForAuth(id: string): Promise<UserDocument | null> {
     return this.userModel.findById(id).exec();
   }
@@ -207,7 +207,7 @@ export class UsersService {
     return { deleted: true };
   }
 
-  // Hàm để cập nhật refresh token (cho Auth)
+  // Function to update refresh token (for Auth)
   async setCurrentRefreshToken(
     userId: string,
     refreshToken: string | null,

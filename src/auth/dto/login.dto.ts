@@ -7,8 +7,8 @@ export class LoginDto {
     description: 'The email of the user',
     example: 'john.doe@example.com',
   })
-  @IsNotEmpty({ message: 'Email không được để trống' })
-  @IsEmail({}, { message: 'Email không đúng định dạng' })
+  @IsNotEmpty({ message: 'Email cannot be empty' })
+  @IsEmail({}, { message: 'Email format is invalid' })
   email: string;
 
   @ApiProperty({
@@ -16,8 +16,8 @@ export class LoginDto {
     example: 'password123',
     minLength: 6,
   })
-  @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
+  @IsNotEmpty({ message: 'Password cannot be empty' })
   @IsString()
-  @MinLength(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
+  @MinLength(6, { message: 'Password must be at least 6 characters' })
   password: string;
 }
