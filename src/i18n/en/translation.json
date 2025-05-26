@@ -1,0 +1,33 @@
+{
+  "VALIDATION": {
+    "EMAIL_NOT_EMPTY": "Email should not be empty.",
+    "EMAIL_INVALID_FORMAT": "Email must be a valid email address.",
+    "PASSWORD_NOT_EMPTY": "Password should not be empty.",
+    "PASSWORD_MIN_LENGTH": "Password must be at least {constraints.0} characters long.",
+    "NAME_NOT_EMPTY": "Name should not be empty.",
+    "PASSWORD_CONFIRMATION_MATCH": "Password confirmation does not match password.",
+    "PASSWORD_CONFIRMATION_NOT_EMPTY": "Password confirmation should not be empty."
+  },
+  "USER": {
+    "CREATED_SUCCESS": "User created successfully.",
+    "PROFILE_FETCHED": "User profile fetched successfully.",
+    "UPDATED_SUCCESS": "User updated successfully.",
+    "EMAIL_EXISTS": "Email already exists.",
+    "EMAIL_EXISTS_DB_ERROR": "Email already exists (DB error).",
+    "CREATE_ERROR": "Unable to create user.",
+    "NOT_FOUND": "User with ID {id} not found."
+  },
+  "AUTH": {
+    "LOGIN_SUCCESS": "Login successful.",
+    "REFRESH_SUCCESS": "Token refreshed successfully.",
+    "LOGOUT_SUCCESS": "Logout successful.",
+    "INVALID_CREDENTIALS": "Invalid credentials.",
+    "ACCESS_DENIED": "Access denied.",
+    "JWT_SECRETS_NOT_CONFIGURED": "JWT secrets are not configured.",
+    "INVALID_ACCESS_TOKEN_EXPIRATION": "Invalid access token expiration time.",
+    "INVALID_REFRESH_TOKEN_EXPIRATION": "Invalid refresh token expiration time.",
+    "JWT_ACCESS_SECRET_NOT_DEFINED": "JWT_ACCESS_SECRET is not defined.",
+    "JWT_REFRESH_SECRET_NOT_DEFINED": "JWT_REFRESH_SECRET is not defined."
+  },
+  "HELLO": "Hello {name}, how are you?"
+}

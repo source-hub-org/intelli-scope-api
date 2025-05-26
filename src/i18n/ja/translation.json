@@ -1,0 +1,24 @@
+{
+  "VALIDATION": {
+    "EMAIL_NOT_EMPTY": "メールアドレスは必須です。",
+    "EMAIL_INVALID_FORMAT": "有効なメールアドレス形式である必要があります。",
+    "PASSWORD_NOT_EMPTY": "パスワードは必須です。",
+    "PASSWORD_MIN_LENGTH": "パスワードは最低でも {constraints.0} 文字以上である必要があります。",
+    "NAME_NOT_EMPTY": "名前は必須です。",
+    "PASSWORD_CONFIRMATION_MATCH": "パスワード確認がパスワードと一致しません。",
+    "PASSWORD_CONFIRMATION_NOT_EMPTY": "パスワード確認は必須です。"
+  },
+  "USER": {
+    "CREATED_SUCCESS": "ユーザーが正常に作成されました。",
+    "PROFILE_FETCHED": "ユーザープロファイルが正常に取得されました。",
+    "UPDATED_SUCCESS": "ユーザーが正常に更新されました。"
+  },
+  "AUTH": {
+    "LOGIN_SUCCESS": "ログインに成功しました。",
+    "REFRESH_SUCCESS": "トークンが正常に更新されました。",
+    "LOGOUT_SUCCESS": "ログアウトに成功しました。",
+    "INVALID_CREDENTIALS": "認証情報が無効です。",
+    "ACCESS_DENIED": "アクセスが拒否されました。"
+  },
+  "HELLO": "こんにちは {name} さん、お元気ですか？"
+}
