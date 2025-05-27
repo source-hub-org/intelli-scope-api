@@ -31,10 +31,10 @@ describe('TokenService', () => {
         {
           provide: ConfigService,
           useValue: createMockConfigService({
-            JWT_SECRET: 'test-jwt-secret',
-            JWT_EXPIRATION: '15m',
+            JWT_ACCESS_SECRET: 'test-jwt-secret',
+            JWT_ACCESS_EXPIRATION_TIME: '3600',
             JWT_REFRESH_SECRET: 'test-jwt-refresh-secret',
-            JWT_REFRESH_EXPIRATION: '7d',
+            JWT_REFRESH_EXPIRATION_TIME: '604800',
           }),
         },
       ],
@@ -69,7 +69,7 @@ describe('TokenService', () => {
         },
         {
           secret: 'test-jwt-secret',
-          expiresIn: '15m',
+          expiresIn: 3600,
         },
       );
       expect(result).toBe('access_token');
@@ -93,7 +93,7 @@ describe('TokenService', () => {
         },
         {
           secret: 'test-jwt-refresh-secret',
-          expiresIn: '7d',
+          expiresIn: 604800,
         },
       );
       expect(result).toBe('refresh_token');

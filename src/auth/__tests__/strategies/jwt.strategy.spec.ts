@@ -66,7 +66,7 @@ describe('JwtStrategy', () => {
   describe('validate', () => {
     it('should return user info when token payload is valid', async () => {
       // Arrange
-      const payload = { userId: 'user-id', email: 'test@example.com' };
+      const payload = { sub: 'user-id', username: 'test@example.com' };
       jest.spyOn(usersService, 'findById').mockResolvedValue(mockUser as any);
 
       // Act
@@ -83,7 +83,7 @@ describe('JwtStrategy', () => {
 
     it('should throw UnauthorizedException when user is not found', async () => {
       // Arrange
-      const payload = { userId: 'nonexistent-id', email: 'test@example.com' };
+      const payload = { sub: 'nonexistent-id', username: 'test@example.com' };
       jest.spyOn(usersService, 'findById').mockResolvedValue(null);
 
       // Act & Assert

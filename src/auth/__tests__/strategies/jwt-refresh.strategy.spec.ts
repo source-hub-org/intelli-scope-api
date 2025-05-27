@@ -70,7 +70,11 @@ describe('JwtRefreshTokenStrategy', () => {
   describe('validate', () => {
     it('should return user info when refresh token is valid', async () => {
       // Arrange
-      const payload = { userId: 'user-id' };
+      const payload = {
+        sub: 'user-id',
+        username: 'test@example.com',
+        tokenType: 'refresh',
+      };
       const request = { body: { refresh_token: 'refresh_token' } };
       jest
         .spyOn(usersService, 'findUserByIdForAuth')
@@ -95,7 +99,11 @@ describe('JwtRefreshTokenStrategy', () => {
 
     it('should throw UnauthorizedException when refresh token is missing from request', async () => {
       // Arrange
-      const payload = { userId: 'user-id' };
+      const payload = {
+        sub: 'user-id',
+        username: 'test@example.com',
+        tokenType: 'refresh',
+      };
       const request = { body: {} };
 
       // Act & Assert
@@ -106,7 +114,11 @@ describe('JwtRefreshTokenStrategy', () => {
 
     it('should throw ForbiddenException when user is not found', async () => {
       // Arrange
-      const payload = { userId: 'nonexistent-id' };
+      const payload = {
+        sub: 'nonexistent-id',
+        username: 'test@example.com',
+        tokenType: 'refresh',
+      };
       const request = { body: { refresh_token: 'refresh_token' } };
       jest.spyOn(usersService, 'findUserByIdForAuth').mockResolvedValue(null);
 
@@ -121,7 +133,11 @@ describe('JwtRefreshTokenStrategy', () => {
 
     it('should throw ForbiddenException when user has no stored refresh token', async () => {
       // Arrange
-      const payload = { userId: 'user-id' };
+      const payload = {
+        sub: 'user-id',
+        username: 'test@example.com',
+        tokenType: 'refresh',
+      };
       const request = { body: { refresh_token: 'refresh_token' } };
       const userWithoutRefreshToken = { ...mockUser, hashedRefreshToken: null };
       jest
@@ -137,7 +153,11 @@ describe('JwtRefreshTokenStrategy', () => {
 
     it('should throw ForbiddenException when refresh token does not match', async () => {
       // Arrange
-      const payload = { userId: 'user-id' };
+      const payload = {
+        sub: 'user-id',
+        username: 'test@example.com',
+        tokenType: 'refresh',
+      };
       const request = { body: { refresh_token: 'invalid_refresh_token' } };
       jest
         .spyOn(usersService, 'findUserByIdForAuth')
@@ -157,7 +177,11 @@ describe('JwtRefreshTokenStrategy', () => {
 
     it('should throw ForbiddenException when bcrypt.compare throws an error', async () => {
       // Arrange
-      const payload = { userId: 'user-id' };
+      const payload = {
+        sub: 'user-id',
+        username: 'test@example.com',
+        tokenType: 'refresh',
+      };
       const request = { body: { refresh_token: 'refresh_token' } };
       jest
         .spyOn(usersService, 'findUserByIdForAuth')
