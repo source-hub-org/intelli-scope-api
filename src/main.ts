@@ -1,57 +1,99 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
-import * as fs from 'fs'; // Import 'fs' for file system operations
+import * as fs from 'fs';
+import * as compression from 'compression';
+import helmet from 'helmet';
+import { ConfigService } from '@nestjs/config';
 
+/**
+ * Bootstrap the application
+ */
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(new ValidationPipe());
+  // Create the application
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
 
-  // --- Swagger Configuration ---
-  const config = new DocumentBuilder()
-    .setTitle('NestJS API') // Set the title of your API
-    .setDescription('The API description') // Provide a description
-    .setVersion('1.0') // Set the API version
-    .addBearerAuth() // If you use Bearer token authentication
-    .build();
+  // Get the config service
+  const configService = app.get(ConfigService);
 
-  const document = SwaggerModule.createDocument(app, config);
+  // Get the application port
+  const port = configService.get<number>('PORT', 3000);
 
-  // Option 1: Setup Swagger UI (interactive documentation)
-  // This will make your Swagger UI available at /api
-  SwaggerModule.setup('api', app, document);
+  // Get the application environment
+  const environment = configService.get<string>('NODE_ENV', 'development');
+  const isDevelopment = environment !== 'production';
 
-  // Option 2: Generate and save OpenAPI JSON file (e.g., during build or on demand)
-  // You can call this function when you need to generate the file.
-  // For example, you might have a separate script or integrate it into your build process.
-  generateOpenApiJson(app, document);
+  // Create a logger
+  const logger = new Logger('Bootstrap');
 
-  await app.listen(process.env.PORT ?? 3000);
+  // Enable CORS
+  app.enableCors({
+    origin: configService.get<string>('CORS_ORIGIN', '*'),
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
-  console.log(`Application is running on: ${await app.getUrl()}`);
-  console.log(`Swagger UI available at ${await app.getUrl()}/api`);
-  console.log(`OpenAPI JSON available at ${await app.getUrl()}/api-json`); // Default path for JSON
+  // Use compression
+  app.use(compression());
+
+  // Use helmet for security headers
+  app.use(
+    helmet({
+      contentSecurityPolicy: isDevelopment ? false : undefined,
+    }),
+  );
+
+  // Set global prefix
+  const apiPrefix = configService.get<string>('API_PREFIX', 'api');
+  app.setGlobalPrefix(apiPrefix);
+
+  // Configure Swagger
+  if (isDevelopment) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('IntelliScope API')
+      .setDescription('API documentation for IntelliScope')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+
+    // Setup Swagger UI
+    SwaggerModule.setup('docs', app, document);
+
+    // Generate OpenAPI JSON file
+    generateOpenApiJson(app, document);
+  }
+
+  // Start the application
+  await app.listen(port);
+
+  // Log the application URL
+  logger.log(`Application is running on: ${await app.getUrl()}`);
+
+  // Log Swagger URL in development
+  if (isDevelopment) {
+    logger.log(`Swagger UI available at ${await app.getUrl()}/docs`);
+    logger.log(`OpenAPI JSON available at ${await app.getUrl()}/docs-json`);
+  }
 }
 
 /**
- * Function to generate and save the OpenAPI JSON file.
- * @param app The NestJS application instance.
- * @param document The OpenAPI document object.
+ * Generate and save the OpenAPI JSON file
+ * @param app The NestJS application instance
+ * @param document The OpenAPI document
  */
 function generateOpenApiJson(app: INestApplication, document: any) {
-  const outputPath = './openapi.json'; // Or any path you prefer
-  fs.writeFileSync(outputPath, JSON.stringify(document, null, 2)); // Beautify the JSON output
-  console.log(`OpenAPI JSON file has been generated at ${outputPath}`);
+  const outputPath = './openapi.json';
+  fs.writeFileSync(outputPath, JSON.stringify(document, null, 2));
 
-  // Optionally, you can expose a route to download the JSON file.
-  // The SwaggerModule.setup already provides /api-json by default when UI is enabled.
-  // If you disable the UI or need a custom path, you can do it manually:
-  // (app as any).getHttpAdapter().get('/openapi.json', (req, res) => {
-  //   res.setHeader('Content-Type', 'application/json');
-  //   res.send(document);
-  // });
+  const logger = new Logger('OpenAPI');
+  logger.log(`OpenAPI JSON file has been generated at ${outputPath}`);
 }
 
+// Start the application
 void bootstrap();

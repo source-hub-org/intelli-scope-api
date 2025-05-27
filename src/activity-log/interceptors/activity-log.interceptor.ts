@@ -13,7 +13,11 @@ import { ActivityLogService } from '../activity-log.service';
 import { ConfigService } from '@nestjs/config';
 import { ClsService } from 'nestjs-cls';
 import { Request } from 'express';
+import { RequestUtils } from '../utils/request.util';
 
+/**
+ * Interceptor that logs API access activity
+ */
 @Injectable()
 export class ActivityLogInterceptor implements NestInterceptor {
   private readonly logger = new Logger(ActivityLogInterceptor.name);
@@ -30,6 +34,12 @@ export class ActivityLogInterceptor implements NestInterceptor {
       .split(',');
   }
 
+  /**
+   * Intercept HTTP requests to log API access
+   * @param context Execution context
+   * @param next Call handler
+   * @returns Observable of the response
+   */
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     // Only process HTTP requests
     if (context.getType() !== 'http') {
@@ -87,6 +97,11 @@ export class ActivityLogInterceptor implements NestInterceptor {
     }
   }
 
+  /**
+   * Check if a path should be excluded from logging
+   * @param path Request path
+   * @returns True if the path should be excluded
+   */
   private shouldExcludePath(path: string): boolean {
     return this.excludePaths.some(
       (excludePath) =>
@@ -94,6 +109,10 @@ export class ActivityLogInterceptor implements NestInterceptor {
     );
   }
 
+  /**
+   * Log API access
+   * @param params Log parameters
+   */
   private logApiAccess({
     request,
     user,
@@ -109,45 +128,12 @@ export class ActivityLogInterceptor implements NestInterceptor {
     error?: unknown;
   }): void {
     try {
-      const { method, path, params, query, headers } = request;
-      const userAgent = headers['user-agent'];
-      const ipAddress = this.getClientIp(request);
-
-      // Prepare log data
-      const logData = {
-        userId: user._id as string,
-        actionType: 'API_ACCESS',
-        timestamp: new Date(),
-        actor: {
-          username:
-            (user.name as string) || (user.email as string) || 'unknown',
-          ipAddress,
-          userAgent,
-        },
-        resource: {
-          type: 'SystemRoute',
-          id: path,
-          displayName: `${method} ${path}`,
-        },
-        details: {
-          httpMethod: method,
-          httpPath: path,
-          requestParams: params,
-          requestQuery: query,
-        },
-        operationStatus: status,
+      // Use the utility to prepare log data
+      const logData = RequestUtils.prepareLogData(request, user, {
         traceId,
-      };
-
-      // Add failure details if applicable
-      if (status === 'FAILURE' && error) {
-        const err = error as Record<string, unknown>;
-        logData['failureDetails'] = {
-          errorCode:
-            (err.code as string) || (err.status as string) || 'UNKNOWN',
-          message: (err.message as string) || 'Unknown error',
-        };
-      }
+        status,
+        error,
+      });
 
       // Log asynchronously
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -159,23 +145,5 @@ export class ActivityLogInterceptor implements NestInterceptor {
         error.stack,
       );
     }
-  }
-
-  private getClientIp(request: Request): string {
-    // Try to get IP from various headers
-    const forwardedFor = request.headers['x-forwarded-for'];
-    if (forwardedFor) {
-      const ips = Array.isArray(forwardedFor)
-        ? forwardedFor[0]
-        : forwardedFor.split(',')[0];
-      return ips.trim();
-    }
-
-    const realIp = request.headers['x-real-ip'];
-    if (realIp) {
-      return Array.isArray(realIp) ? realIp[0] : realIp;
-    }
-
-    return request.ip || 'unknown';
   }
 }

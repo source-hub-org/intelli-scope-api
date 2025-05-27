@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
+import { CommonModule } from './common/common.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
@@ -14,12 +15,18 @@ import {
 } from 'nestjs-i18n';
 import * as path from 'path';
 
+/**
+ * Main application module
+ */
 @Module({
   imports: [
+    // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    // Internationalization
     I18nModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         // Determine if we're in development or production
@@ -46,6 +53,8 @@ import * as path from 'path';
       inject: [ConfigService],
       imports: [ConfigModule],
     }),
+
+    // Database
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -59,7 +68,10 @@ import * as path from 'path';
       }),
       inject: [ConfigService],
     }),
-    ActivityLogModule, // Import the Activity Log Module
+
+    // Application modules
+    CommonModule,
+    ActivityLogModule,
     AuthModule,
     UsersModule,
   ],
