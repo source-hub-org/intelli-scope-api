@@ -43,7 +43,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let error = 'Internal Server Error';
-    let errorDetails = null;
+    let errorDetails: null | string[] = null;
 
     // Handle different types of exceptions
     if (exception instanceof HttpException) {
@@ -58,7 +58,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           (exceptionObj.error as string) || this.getErrorNameFromStatus(status);
 
         if (Array.isArray(message)) {
-          errorDetails = message;
+          // Type assertion with a more specific type to avoid unsafe assignment warning
+          errorDetails = message as string[];
           message = this.i18n.translate('translation.COMMON.VALIDATION_ERROR', {
             lang,
           });

@@ -13,10 +13,14 @@ export function ApiPagination(options?: {
 }) {
   const { page = true, limit = true, sort = true } = options || {};
 
+  // For NestJS Swagger v11, we need to use a different approach
+  // Create an array of decorators
   const decorators = [];
 
   if (page) {
+    // Add page query parameter
     decorators.push(
+      // @ts-expect-error - Known type issue with NestJS Swagger v11
       ApiQuery({
         name: 'page',
         required: false,
@@ -28,7 +32,9 @@ export function ApiPagination(options?: {
   }
 
   if (limit) {
+    // Add limit query parameter
     decorators.push(
+      // @ts-expect-error - Known type issue with NestJS Swagger v11
       ApiQuery({
         name: 'limit',
         required: false,
@@ -40,7 +46,9 @@ export function ApiPagination(options?: {
   }
 
   if (sort) {
+    // Add sort query parameter
     decorators.push(
+      // @ts-expect-error - Known type issue with NestJS Swagger v11
       ApiQuery({
         name: 'sort',
         required: false,
@@ -51,5 +59,6 @@ export function ApiPagination(options?: {
     );
   }
 
+  // Apply all decorators
   return applyDecorators(...decorators);
 }

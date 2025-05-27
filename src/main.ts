@@ -90,10 +90,7 @@ async function bootstrap() {
  * @param app The NestJS application instance
  * @param document The OpenAPI document
  */
-function generateOpenApiJson(
-  app: INestApplication,
-  document: Record<string, unknown>,
-) {
+function generateOpenApiJson(app: INestApplication, document: any) {
   const outputPath = './openapi.json';
   fs.writeFileSync(outputPath, JSON.stringify(document, null, 2));
 

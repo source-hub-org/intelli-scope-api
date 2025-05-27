@@ -28,7 +28,7 @@ export class SanitizerUtils {
         sanitized[key] !== null
       ) {
         sanitized[key] = this.sanitizeObject(
-          sanitized[key],
+          sanitized[key] as Record<string, unknown>,
           sensitiveFields,
           maskValue,
         );
@@ -59,7 +59,7 @@ export class SanitizerUtils {
         delete cleaned[key];
       } else if (typeof cleaned[key] === 'object' && cleaned[key] !== null) {
         cleaned[key] = this.removeSensitiveFields(
-          cleaned[key],
+          cleaned[key] as Record<string, unknown>,
           sensitiveFields,
         );
       }
