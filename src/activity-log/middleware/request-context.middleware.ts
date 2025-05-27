@@ -10,6 +10,13 @@ export class RequestContextMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction): void {
     try {
+      // Store request and response objects in CLS context
+      this.clsService.set('request', req);
+      this.clsService.set('response', res);
+
+      // Store start time for request duration tracking
+      this.clsService.set('startTime', Date.now());
+
       // Store user information in CLS context if authenticated
       if (req.user) {
         this.clsService.set('user', req.user);
@@ -22,15 +29,16 @@ export class RequestContextMiddleware implements NestMiddleware {
         'requestId',
         (req.headers['x-request-id'] as string) || this.clsService.getId(),
       );
+
+      next();
     } catch (error: unknown) {
       const err = error as Error;
       this.logger.error(
         `Failed to set request context: ${err.message}`,
         err.stack,
       );
+      next(err);
     }
-
-    next();
   }
 
   private getClientIp(request: Request): string {

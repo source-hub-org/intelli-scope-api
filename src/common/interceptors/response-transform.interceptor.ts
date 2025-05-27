@@ -14,7 +14,7 @@ export interface Response<T> {
   data: T;
   meta?: Record<string, any>;
   message?: string;
-  statusCode: number;
+  statusCode?: number;
   success: boolean;
 }
 
@@ -78,13 +78,17 @@ export class ResponseTransformInterceptor<T>
         }
 
         // Build the standard response
-        return {
+        const response: Response<T> = {
           data: responseData as T,
-          meta,
-          message,
-          statusCode,
           success: statusCode >= 200 && statusCode < 300,
-        } as Response<T>;
+        };
+
+        // Add optional fields only if they exist
+        if (meta) response.meta = meta;
+        if (message) response.message = message;
+        if (statusCode) response.statusCode = statusCode;
+
+        return response;
       }),
     );
   }

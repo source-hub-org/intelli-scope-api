@@ -9,6 +9,7 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
+import { ClsService } from 'nestjs-cls';
 
 /**
  * Interceptor to log all incoming requests and their responses
@@ -19,7 +20,10 @@ export class RequestLoggingInterceptor implements NestInterceptor {
   private readonly isVerboseLogging: boolean;
   private readonly excludePaths: string[];
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly clsService: ClsService,
+  ) {
     // Enable verbose logging based on configuration
     this.isVerboseLogging = this.configService.get<boolean>(
       'VERBOSE_REQUEST_LOGGING',
@@ -64,7 +68,8 @@ export class RequestLoggingInterceptor implements NestInterceptor {
       this.logger.debug(`Request Body: ${this.sanitizeBody(request.body)}`);
     }
 
-    const startTime = Date.now();
+    // Get the start time from CLS if available, or use current time
+    const startTime = this.clsService?.get('startTime') || Date.now();
 
     return next.handle().pipe(
       tap({

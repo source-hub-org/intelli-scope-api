@@ -11,14 +11,19 @@ import { Types } from 'mongoose';
 export class ActivityLogSanitizerService {
   private readonly sensitiveFields: string[];
 
-  constructor(private configService: ConfigService) {
+  constructor(private configService?: ConfigService) {
     // Configure sensitive fields that should be masked or excluded
-    this.sensitiveFields = this.configService
-      .get<string>(
+    const defaultSensitiveFields =
+      'password,password_confirmation,token,access_token,refresh_token,secret,authorization,creditCard,ssn';
+
+    // Use ConfigService if available, otherwise use default values
+    const sensitiveFieldsStr =
+      this.configService?.get<string>(
         'ACTIVITY_LOG_SENSITIVE_FIELDS',
-        'password,password_hash,token,secret',
-      )
-      .split(',');
+        defaultSensitiveFields,
+      ) || defaultSensitiveFields;
+
+    this.sensitiveFields = sensitiveFieldsStr.split(',');
   }
 
   /**
@@ -27,38 +32,13 @@ export class ActivityLogSanitizerService {
    * @returns Sanitized log data
    */
   sanitizeLogData(
-    logData: Partial<ActivityLog> & { userId: string },
+    logData: Partial<ActivityLog> & { userId: string | Types.ObjectId },
   ): Partial<ActivityLog> & { userId: string | Types.ObjectId } {
     const sanitized = { ...logData };
 
-    // Sanitize input payload summary if present
-    if (sanitized.details?.inputPayloadSummary) {
-      sanitized.details.inputPayloadSummary = this.sanitizeObject(
-        sanitized.details.inputPayloadSummary,
-      );
-    }
-
-    // Sanitize entity snapshot if present
-    if (sanitized.details?.entitySnapshot) {
-      sanitized.details.entitySnapshot = this.sanitizeObject(
-        sanitized.details.entitySnapshot,
-      );
-    }
-
-    // Sanitize changed fields if present
-    if (sanitized.details?.changedFields?.length) {
-      sanitized.details.changedFields = sanitized.details.changedFields.map(
-        (field) => {
-          if (this.sensitiveFields.includes(field.field)) {
-            return {
-              field: field.field,
-              oldValue: '[REDACTED]',
-              newValue: '[REDACTED]',
-            };
-          }
-          return field;
-        },
-      );
+    // Sanitize details if it's an object
+    if (sanitized.details && typeof sanitized.details === 'object') {
+      sanitized.details = this.sanitizeObject(sanitized.details);
     }
 
     return sanitized;
@@ -69,11 +49,18 @@ export class ActivityLogSanitizerService {
    * @param obj Object to sanitize
    * @returns Sanitized object
    */
-  sanitizeObject(obj: Record<string, any>): Record<string, any> {
+  sanitizeObject(obj: any): any {
+    // Handle non-objects
     if (!obj || typeof obj !== 'object') {
       return obj;
     }
 
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.sanitizeObject(item));
+    }
+
+    // Handle objects
     const sanitized = { ...obj };
 
     for (const key in sanitized) {
@@ -83,9 +70,7 @@ export class ActivityLogSanitizerService {
         typeof sanitized[key] === 'object' &&
         sanitized[key] !== null
       ) {
-        sanitized[key] = this.sanitizeObject(
-          sanitized[key] as Record<string, any>,
-        );
+        sanitized[key] = this.sanitizeObject(sanitized[key]);
       }
     }
 

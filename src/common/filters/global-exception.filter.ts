@@ -51,22 +51,28 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
+      // Set default error based on status code
+      error = this.getErrorNameFromStatus(status);
+
       if (typeof exceptionResponse === 'object') {
         const exceptionObj = exceptionResponse as Record<string, unknown>;
         message = (exceptionObj.message as string) || exception.message;
-        error =
-          (exceptionObj.error as string) || this.getErrorNameFromStatus(status);
 
-        if (Array.isArray(message)) {
+        // Only override error if explicitly provided
+        if (exceptionObj.error) {
+          error = exceptionObj.error as string;
+        }
+
+        // Check for validation errors
+        if (exceptionObj.errors) {
+          errorDetails = exceptionObj.errors as string[];
+        } else if (Array.isArray(message)) {
           // Type assertion with a more specific type to avoid unsafe assignment warning
           errorDetails = message as string[];
           try {
-            message = this.i18n.translate(
-              'translation.COMMON.VALIDATION_ERROR',
-              {
-                lang,
-              },
-            );
+            message = this.i18n.t('translation.COMMON.VALIDATION_ERROR', {
+              lang,
+            });
           } catch (error) {
             this.logger.warn(
               'Failed to translate validation error message',
@@ -85,7 +91,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       if (exception.code === 11000) {
         status = HttpStatus.CONFLICT;
         try {
-          message = this.i18n.translate('translation.COMMON.DUPLICATE_KEY', {
+          message = this.i18n.t('translation.COMMON.DUPLICATE_KEY', {
             lang,
           });
         } catch (error) {
@@ -97,7 +103,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         }
       } else {
         try {
-          message = this.i18n.translate('translation.COMMON.DATABASE_ERROR', {
+          message = this.i18n.t('translation.COMMON.DATABASE_ERROR', {
             lang,
           });
         } catch (error) {
@@ -111,7 +117,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // Handle other errors
       const err = exception as Error;
       try {
-        message = this.i18n.translate('translation.COMMON.INTERNAL_ERROR', {
+        message = this.i18n.t('translation.COMMON.INTERNAL_ERROR', {
           lang,
         });
       } catch (error) {
@@ -133,7 +139,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       path: request.url,
     };
 
-    // Add error details in development mode or if they exist
+    // Add error details if they exist
     if (errorDetails) {
       responseBody['details'] = errorDetails;
     }

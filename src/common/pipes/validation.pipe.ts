@@ -80,17 +80,34 @@ export class ValidationPipe implements PipeTransform<any> {
         );
 
         // Throw a bad request exception with the formatted errors
-        const errorMessage = 'Validation error occurred.';
+        let errorMessage = 'Validation error occurred.';
+
+        // Try to get translated message if i18n service is available
+        if (this.i18n) {
+          try {
+            errorMessage = this.i18n.t('translation.COMMON.VALIDATION_ERROR');
+          } catch (error) {
+            this.logger.warn(
+              'Failed to translate validation error message',
+              error,
+            );
+          }
+        }
 
         throw new BadRequestException({
           message: errorMessage,
-          error: 'Validation Error',
-          details: formattedErrors,
+          error: 'Bad Request',
+          errors: formattedErrors,
         });
       }
 
       return object as T;
     } catch (error) {
+      // If the error is a BadRequestException, rethrow it
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
       this.logger.error(
         `Unexpected error in validation pipe: ${error.message}`,
         error.stack,
