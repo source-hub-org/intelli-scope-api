@@ -60,9 +60,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         if (Array.isArray(message)) {
           // Type assertion with a more specific type to avoid unsafe assignment warning
           errorDetails = message as string[];
-          message = this.i18n.translate('translation.COMMON.VALIDATION_ERROR', {
-            lang,
-          });
+          try {
+            message = this.i18n.translate(
+              'translation.COMMON.VALIDATION_ERROR',
+              {
+                lang,
+              },
+            );
+          } catch (error) {
+            this.logger.warn(
+              'Failed to translate validation error message',
+              error,
+            );
+            message = 'Validation error occurred.';
+          }
         }
       } else {
         message = exceptionResponse;
@@ -73,22 +84,40 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
       if (exception.code === 11000) {
         status = HttpStatus.CONFLICT;
-        message = this.i18n.translate('translation.COMMON.DUPLICATE_KEY', {
-          lang,
-        });
+        try {
+          message = this.i18n.translate('translation.COMMON.DUPLICATE_KEY', {
+            lang,
+          });
+        } catch (error) {
+          this.logger.warn(
+            'Failed to translate duplicate key error message',
+            error,
+          );
+          message = 'A record with this key already exists.';
+        }
       } else {
-        message = this.i18n.translate('translation.COMMON.DATABASE_ERROR', {
-          lang,
-        });
+        try {
+          message = this.i18n.translate('translation.COMMON.DATABASE_ERROR', {
+            lang,
+          });
+        } catch (error) {
+          this.logger.warn('Failed to translate database error message', error);
+          message = 'A database error occurred.';
+        }
       }
 
       error = 'Database Error';
     } else {
       // Handle other errors
       const err = exception as Error;
-      message = this.i18n.translate('translation.COMMON.INTERNAL_ERROR', {
-        lang,
-      });
+      try {
+        message = this.i18n.translate('translation.COMMON.INTERNAL_ERROR', {
+          lang,
+        });
+      } catch (error) {
+        this.logger.warn('Failed to translate internal error message', error);
+        message = 'An internal server error occurred.';
+      }
       error = 'Internal Server Error';
 
       // Log the full error

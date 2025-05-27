@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/": {
+    "/api": {
       "get": {
         "operationId": "AppController_getHello",
         "parameters": [],
@@ -23,7 +23,7 @@
         ]
       }
     },
-    "/hello-ja": {
+    "/api/hello-ja": {
       "get": {
         "operationId": "AppController_getHelloJa",
         "parameters": [],
@@ -45,7 +45,7 @@
         ]
       }
     },
-    "/auth/login": {
+    "/api/auth/login": {
       "post": {
         "operationId": "AuthController_login",
         "parameters": [],
@@ -107,7 +107,7 @@
         ]
       }
     },
-    "/auth/profile": {
+    "/api/auth/profile": {
       "get": {
         "operationId": "AuthController_getProfile",
         "parameters": [],
@@ -151,7 +151,7 @@
         ]
       }
     },
-    "/auth/refresh": {
+    "/api/auth/refresh": {
       "post": {
         "operationId": "AuthController_refreshToken",
         "parameters": [],
@@ -191,7 +191,7 @@
         ]
       }
     },
-    "/auth/logout": {
+    "/api/auth/logout": {
       "post": {
         "operationId": "AuthController_logout",
         "parameters": [],
@@ -214,7 +214,7 @@
         ]
       }
     },
-    "/users": {
+    "/api/users": {
       "post": {
         "operationId": "UsersController_create",
         "parameters": [],
@@ -314,7 +314,7 @@
         ]
       }
     },
-    "/users/{id}": {
+    "/api/users/{id}": {
       "get": {
         "operationId": "UsersController_findOne",
         "parameters": [
@@ -493,8 +493,8 @@
     }
   },
   "info": {
-    "title": "NestJS API",
-    "description": "The API description",
+    "title": "IntelliScope API",
+    "description": "API documentation for IntelliScope",
     "version": "1.0",
     "contact": {}
   },

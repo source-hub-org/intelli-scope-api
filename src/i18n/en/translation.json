@@ -1,4 +1,10 @@
 {
+  "COMMON": {
+    "VALIDATION_ERROR": "Validation error occurred.",
+    "INTERNAL_ERROR": "An internal server error occurred.",
+    "DATABASE_ERROR": "A database error occurred.",
+    "DUPLICATE_KEY": "A record with this key already exists."
+  },
   "VALIDATION": {
     "EMAIL_NOT_EMPTY": "Email should not be empty.",
     "EMAIL_INVALID_FORMAT": "Email must be a valid email address.",

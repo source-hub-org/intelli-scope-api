@@ -4,6 +4,7 @@ import {
   ArgumentMetadata,
   BadRequestException,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
@@ -16,7 +17,7 @@ import { I18nService } from 'nestjs-i18n';
 export class ValidationPipe implements PipeTransform<any> {
   private readonly logger = new Logger(ValidationPipe.name);
 
-  constructor(private readonly i18n: I18nService) {}
+  constructor(@Optional() private readonly i18n?: I18nService) {}
 
   /**
    * Transform and validate the input value
@@ -31,48 +32,71 @@ export class ValidationPipe implements PipeTransform<any> {
     }
 
     // Convert plain object to class instance
-    const valueAsRecord =
-      typeof value === 'object' && value !== null
-        ? (value as Record<string, unknown>)
-        : {};
-    const object = plainToInstance(metatype, valueAsRecord) as object;
+    try {
+      const valueAsRecord =
+        typeof value === 'object' && value !== null
+          ? (value as Record<string, unknown>)
+          : {};
 
-    // Validate the object
-    const errors = await validate(object);
+      // Use a safer approach to transform the object
+      let object: object;
+      try {
+        // Create a new instance of the class
+        const instance = new (metatype as any)();
+        // Manually copy properties instead of using plainToInstance
+        object = Object.assign(instance, valueAsRecord);
+      } catch (error) {
+        this.logger.error(
+          `Error creating object instance: ${error.message}`,
+          error.stack,
+        );
+        // If we can't create an instance, just return the original value
+        return value as T;
+      }
 
-    if (errors.length > 0) {
-      // Format validation errors
-      const formattedErrors = errors.map((err) => {
-        const constraints = err.constraints || {};
-        const property = err.property;
+      // Validate the object
+      const errors = await validate(object);
 
-        // Get the first constraint message
-        const firstConstraint =
-          Object.values(constraints)[0] || 'Invalid value';
+      if (errors.length > 0) {
+        // Format validation errors
+        const formattedErrors = errors.map((err) => {
+          const constraints = err.constraints || {};
+          const property = err.property;
 
-        return {
-          property,
-          message: firstConstraint,
-          constraints,
-        };
-      });
+          // Get the first constraint message
+          const firstConstraint =
+            Object.values(constraints)[0] || 'Invalid value';
 
-      // Log validation errors
-      this.logger.debug(
-        `Validation failed: ${JSON.stringify(formattedErrors)}`,
+          return {
+            property,
+            message: firstConstraint,
+            constraints,
+          };
+        });
+
+        // Log validation errors
+        this.logger.debug(
+          `Validation failed: ${JSON.stringify(formattedErrors)}`,
+        );
+
+        // Throw a bad request exception with the formatted errors
+        const errorMessage = 'Validation error occurred.';
+
+        throw new BadRequestException({
+          message: errorMessage,
+          error: 'Validation Error',
+          details: formattedErrors,
+        });
+      }
+
+      return object as T;
+    } catch (error) {
+      this.logger.error(
+        `Unexpected error in validation pipe: ${error.message}`,
+        error.stack,
       );
-
-      // Throw a bad request exception with the formatted errors
-      throw new BadRequestException({
-        message: this.i18n.translate('translation.COMMON.VALIDATION_ERROR', {
-          lang: 'en', // Default language
-        }),
-        error: 'Validation Error',
-        details: formattedErrors,
-      });
+      return value as T;
     }
-
-    return object as T;
   }
 
   /**

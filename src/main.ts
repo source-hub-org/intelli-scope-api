@@ -7,13 +7,15 @@ import * as fs from 'fs';
 import * as compression from 'compression';
 import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import * as path from 'path';
 
 /**
  * Bootstrap the application
  */
 async function bootstrap() {
   // Create the application
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
@@ -53,6 +55,9 @@ async function bootstrap() {
   // Set global prefix
   const apiPrefix = configService.get<string>('API_PREFIX', 'api');
   app.setGlobalPrefix(apiPrefix);
+
+  // Serve static files from the public directory
+  app.useStaticAssets(path.join(__dirname, '..', 'public'));
 
   // Configure Swagger
   if (isDevelopment) {

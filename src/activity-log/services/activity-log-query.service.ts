@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  ActivityLog,
-  ActivityLogDocument,
-} from '../schemas/activity-log.schema';
+import { ActivityLog, ActivityLogDocument } from '../schemas';
 
 /**
  * Service responsible for querying activity logs
