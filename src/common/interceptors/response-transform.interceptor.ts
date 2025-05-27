@@ -36,40 +36,42 @@ export class ResponseTransformInterceptor<T>
     next: CallHandler,
   ): Observable<Response<T>> {
     const ctx = context.switchToHttp();
-    const response = ctx.getResponse();
+    const response = ctx.getResponse<{ statusCode?: number }>();
     const statusCode = response.statusCode || 200;
 
     return next.handle().pipe(
       map((data) => {
         // Check if the response is already in the standard format
         if (data && typeof data === 'object' && 'success' in data) {
-          return data;
+          return data as Response<T>;
         }
 
         // Extract message and meta if they exist
         let message: string | undefined;
-        let meta: Record<string, any> | undefined;
-        let responseData: any = data;
+        let meta: Record<string, unknown> | undefined;
+        let responseData: unknown = data;
 
         if (data && typeof data === 'object') {
-          if ('message' in data) {
-            message = data.message;
+          const typedData = data as Record<string, unknown>;
+
+          if ('message' in typedData) {
+            message = typedData.message as string;
 
             // If data only contains message, set data to null
-            if (Object.keys(data).length === 1) {
+            if (Object.keys(typedData).length === 1) {
               responseData = null;
             }
           }
 
-          if ('meta' in data) {
-            meta = data.meta;
+          if ('meta' in typedData) {
+            meta = typedData.meta as Record<string, unknown>;
 
             // If data has a data property, use it as the response data
-            if ('data' in data) {
-              responseData = data.data;
+            if ('data' in typedData) {
+              responseData = typedData.data;
             } else {
               // Otherwise, remove meta from the response data
-              const { meta: _, ...rest } = data;
+              const { meta: _, ...rest } = typedData;
               responseData = Object.keys(rest).length > 0 ? rest : null;
             }
           }
@@ -77,12 +79,12 @@ export class ResponseTransformInterceptor<T>
 
         // Build the standard response
         return {
-          data: responseData,
+          data: responseData as T,
           meta,
           message,
           statusCode,
           success: statusCode >= 200 && statusCode < 300,
-        };
+        } as Response<T>;
       }),
     );
   }

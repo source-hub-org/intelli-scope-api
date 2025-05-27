@@ -10,10 +10,10 @@ export class SanitizerUtils {
    * @returns Sanitized object
    */
   static sanitizeObject(
-    obj: Record<string, any>,
+    obj: Record<string, unknown>,
     sensitiveFields: string[],
     maskValue = '[REDACTED]',
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     if (!obj || typeof obj !== 'object') {
       return obj;
     }
@@ -45,9 +45,9 @@ export class SanitizerUtils {
    * @returns Cleaned object
    */
   static removeSensitiveFields(
-    obj: Record<string, any>,
+    obj: Record<string, unknown>,
     sensitiveFields: string[],
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     if (!obj || typeof obj !== 'object') {
       return obj;
     }

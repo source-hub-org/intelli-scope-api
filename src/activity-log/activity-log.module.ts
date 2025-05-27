@@ -1,15 +1,17 @@
 import { Module, Global, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ActivityLog, ActivityLogSchema } from './schemas/activity-log.schema';
+import { ActivityLog, ActivityLogSchema } from './schemas';
 import { ActivityLogService } from './activity-log.service';
-import { ActivityLogInterceptor } from './interceptors/activity-log.interceptor';
+import { ActivityLogInterceptor } from './interceptors';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ClsModule } from 'nestjs-cls';
-import { ActivityLogAspect } from './aspects/activity-log.aspect';
-import { RequestContextMiddleware } from './middleware/request-context.middleware';
-import { ActivityLogSanitizerService } from './services/activity-log-sanitizer.service';
-import { ActivityLogQueryService } from './services/activity-log-query.service';
+import { ActivityLogAspect } from './aspects';
+import { RequestContextMiddleware } from './middleware';
+import {
+  ActivityLogSanitizerService,
+  ActivityLogQueryService,
+} from './services';
 
 /**
  * Module for activity logging functionality

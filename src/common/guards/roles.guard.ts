@@ -5,8 +5,13 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../decorators/roles.decorator';
+import { ROLES_KEY } from '../decorators';
 import { I18nService, I18nContext } from 'nestjs-i18n';
+// Type for user with roles
+type UserWithRoles = {
+  roles?: string[];
+  [key: string]: unknown;
+};
 
 /**
  * Guard to check if a user has the required roles
@@ -36,7 +41,10 @@ export class RolesGuard implements CanActivate {
     }
 
     // Get the user from the request
-    const { user } = context.switchToHttp().getRequest();
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { user?: UserWithRoles }>();
+    const user = request.user;
 
     // If no user is present, deny access
     if (!user) {
@@ -48,7 +56,9 @@ export class RolesGuard implements CanActivate {
     }
 
     // Check if the user has any of the required roles
-    const hasRole = requiredRoles.some((role) => user.roles?.includes(role));
+    const hasRole = requiredRoles.some(
+      (role) => Array.isArray(user.roles) && user.roles.includes(role),
+    );
 
     if (!hasRole) {
       throw new ForbiddenException(

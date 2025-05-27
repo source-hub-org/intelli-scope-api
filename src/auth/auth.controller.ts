@@ -10,12 +10,9 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { LoginDto } from './dto/login.dto';
-import { JwtRefreshTokenGuard } from './jwt-refresh.guard';
-import { LocalAuthGuard } from './local-auth.guard';
-// import { I18n, I18nContext } from 'nestjs-i18n';
-import { UserDocument } from '../users/schemas/user.schema';
+import { JwtAuthGuard, JwtRefreshTokenGuard, LocalAuthGuard } from './guards';
+import { LoginDto } from './dto';
+import { UserDocument } from '../users/schemas';
 import {
   ApiTags,
   ApiOperation,

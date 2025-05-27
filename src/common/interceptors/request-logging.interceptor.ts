@@ -82,12 +82,12 @@ export class RequestLoggingInterceptor implements NestInterceptor {
             this.logger.debug(`Response Body: ${this.sanitizeBody(data)}`);
           }
         },
-        error: (error) => {
+        error: (error: { status?: number; message?: string }) => {
           const duration = Date.now() - startTime;
 
           // Log the error
           this.logger.error(
-            `Error: ${method} ${path} - ${error.status || 500} (${duration}ms): ${error.message}`,
+            `Error: ${method} ${path} - ${error.status || 500} (${duration}ms): ${error.message || 'Unknown error'}`,
           );
         },
       }),
@@ -118,7 +118,10 @@ export class RequestLoggingInterceptor implements NestInterceptor {
 
     try {
       // Create a copy of the body
-      const sanitized = { ...body };
+      const sanitized: Record<string, unknown> =
+        typeof body === 'object' && body !== null
+          ? { ...(body as Record<string, unknown>) }
+          : {};
 
       // Mask sensitive fields
       const sensitiveFields = ['password', 'token', 'secret', 'authorization'];
@@ -130,7 +133,7 @@ export class RequestLoggingInterceptor implements NestInterceptor {
       }
 
       return JSON.stringify(sanitized);
-    } catch (error) {
+    } catch (_error) {
       return 'unable to stringify body';
     }
   }

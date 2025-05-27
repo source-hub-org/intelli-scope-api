@@ -1,10 +1,8 @@
 // src/users/users.service.ts
 import { Injectable } from '@nestjs/common';
-import { UserCrudService } from './services/user-crud.service';
-import { UserAuthenticationService } from './services/user-authentication.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserDocument } from './schemas/user.schema';
+import { UserCrudService, UserAuthenticationService } from './services';
+import { CreateUserDto, UpdateUserDto } from './dto';
+import { UserDocument } from './schemas';
 
 /**
  * Main service for user operations

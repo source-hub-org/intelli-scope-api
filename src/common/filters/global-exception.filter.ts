@@ -52,9 +52,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const exceptionResponse = exception.getResponse();
 
       if (typeof exceptionResponse === 'object') {
-        const exceptionObj = exceptionResponse as Record<string, any>;
-        message = exceptionObj.message || exception.message;
-        error = exceptionObj.error || this.getErrorNameFromStatus(status);
+        const exceptionObj = exceptionResponse as Record<string, unknown>;
+        message = (exceptionObj.message as string) || exception.message;
+        error =
+          (exceptionObj.error as string) || this.getErrorNameFromStatus(status);
 
         if (Array.isArray(message)) {
           errorDetails = message;
@@ -63,7 +64,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           });
         }
       } else {
-        message = exceptionResponse as string;
+        message = exceptionResponse;
       }
     } else if (exception instanceof MongoError) {
       // Handle MongoDB errors
@@ -121,7 +122,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
    * @returns Error name
    */
   private getErrorNameFromStatus(status: number): string {
-    switch (status) {
+    const httpStatus = status as HttpStatus;
+    switch (httpStatus) {
       case HttpStatus.BAD_REQUEST:
         return 'Bad Request';
       case HttpStatus.UNAUTHORIZED:

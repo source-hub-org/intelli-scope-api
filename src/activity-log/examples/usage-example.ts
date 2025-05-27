@@ -28,8 +28,8 @@ export class AppModule {}
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { LogActivity } from '../decorators/log-activity.decorator';
-import { User, UserDocument } from '../../users/schemas/user.schema';
+import { LogActivity } from '../decorators';
+import { User, UserDocument } from '../../users/schemas';
 
 @Injectable()
 export class UserService {

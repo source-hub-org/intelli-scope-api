@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UserDocument } from '../../users/schemas/user.schema';
+import { UserDocument } from '../../users/schemas';
 
 /**
  * Service responsible for JWT token operations
@@ -58,7 +58,7 @@ export class TokenService {
       return this.jwtService.verify(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -73,7 +73,7 @@ export class TokenService {
       return this.jwtService.verify(token, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

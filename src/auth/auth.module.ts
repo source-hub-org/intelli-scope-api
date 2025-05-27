@@ -15,7 +15,7 @@ import {
 } from './strategies';
 
 // Import services
-import { TokenService } from './services/token.service';
+import { TokenService } from './services';
 
 /**
  * Module for authentication functionality

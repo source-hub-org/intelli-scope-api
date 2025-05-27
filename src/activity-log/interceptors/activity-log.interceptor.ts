@@ -13,7 +13,7 @@ import { ActivityLogService } from '../activity-log.service';
 import { ConfigService } from '@nestjs/config';
 import { ClsService } from 'nestjs-cls';
 import { Request } from 'express';
-import { RequestUtils } from '../utils/request.util';
+import { RequestUtils } from '../utils';
 
 /**
  * Interceptor that logs API access activity

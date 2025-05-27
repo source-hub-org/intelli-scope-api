@@ -24,14 +24,18 @@ export class ValidationPipe implements PipeTransform<any> {
    * @param metadata The argument metadata
    * @returns The transformed value
    */
-  async transform(value: any, { metatype }: ArgumentMetadata) {
+  async transform<T>(value: any, { metatype }: ArgumentMetadata): Promise<T> {
     // If no metatype or it's a primitive type, skip validation
     if (!metatype || !this.toValidate(metatype)) {
-      return value;
+      return value as T;
     }
 
     // Convert plain object to class instance
-    const object = plainToInstance(metatype, value);
+    const valueAsRecord =
+      typeof value === 'object' && value !== null
+        ? (value as Record<string, unknown>)
+        : {};
+    const object = plainToInstance(metatype, valueAsRecord) as object;
 
     // Validate the object
     const errors = await validate(object);
@@ -68,7 +72,7 @@ export class ValidationPipe implements PipeTransform<any> {
       });
     }
 
-    return object;
+    return object as T;
   }
 
   /**
@@ -76,8 +80,14 @@ export class ValidationPipe implements PipeTransform<any> {
    * @param metatype The metatype to check
    * @returns True if the metatype should be validated
    */
-  private toValidate(metatype: any): boolean {
-    const types = [String, Boolean, Number, Array, Object];
-    return !types.includes(metatype);
+  private toValidate(metatype: abstract new (...args: any[]) => any): boolean {
+    const types: (abstract new (...args: any[]) => any)[] = [
+      String,
+      Boolean,
+      Number,
+      Array,
+      Object,
+    ];
+    return !types.some((type) => type === metatype);
   }
 }

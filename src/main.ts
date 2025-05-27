@@ -38,13 +38,16 @@ async function bootstrap() {
   });
 
   // Use compression
-  app.use(compression());
+  // Using type assertion to handle the middleware
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  app.use(compression() as any);
 
   // Use helmet for security headers
+  // Using type assertion to handle the middleware
   app.use(
     helmet({
       contentSecurityPolicy: isDevelopment ? false : undefined,
-    }),
+    }) as any,
   );
 
   // Set global prefix
@@ -87,7 +90,10 @@ async function bootstrap() {
  * @param app The NestJS application instance
  * @param document The OpenAPI document
  */
-function generateOpenApiJson(app: INestApplication, document: any) {
+function generateOpenApiJson(
+  app: INestApplication,
+  document: Record<string, unknown>,
+) {
   const outputPath = './openapi.json';
   fs.writeFileSync(outputPath, JSON.stringify(document, null, 2));
 

@@ -1,10 +1,12 @@
 import { Module, Global, Provider } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import { ErrorHandlerService } from './services/error-handler.service';
-import { GlobalExceptionFilter } from './filters/global-exception.filter';
-import { ResponseTransformInterceptor } from './interceptors/response-transform.interceptor';
-import { RequestLoggingInterceptor } from './interceptors/request-logging.interceptor';
-import { ValidationPipe } from './pipes/validation.pipe';
+import { ErrorHandlerService } from './services';
+import { GlobalExceptionFilter } from './filters';
+import {
+  ResponseTransformInterceptor,
+  RequestLoggingInterceptor,
+} from './interceptors';
+import { ValidationPipe } from './pipes';
 
 // Global providers
 const globalProviders: Provider[] = [

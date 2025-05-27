@@ -7,12 +7,12 @@ import {
   Logger,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { UserAuthenticationService } from '../users/services/user-authentication.service';
+import { UserAuthenticationService } from '../users/services';
 import { ConfigService } from '@nestjs/config';
-import { UserDocument } from '../users/schemas/user.schema';
+import { UserDocument } from '../users/schemas';
 import { I18nService, I18nContext } from 'nestjs-i18n';
-import { safeObjectIdToString } from '../utils/object-id.util';
-import { TokenService } from './services/token.service';
+import { safeObjectIdToString } from '../utils';
+import { TokenService } from './services';
 
 /**
  * Interface for token payload
@@ -97,7 +97,7 @@ export class AuthService {
    * @param email User email
    * @returns Token object with access token, refresh token, and expiration
    */
-  async getTokens(userId: string, email: string) {
+  async getTokens(userId: string, _email: string) {
     const accessTokenExpiresInStr = this.configService.get<string>(
       'JWT_ACCESS_EXPIRATION_TIME',
       '3600',

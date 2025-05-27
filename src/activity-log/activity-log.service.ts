@@ -1,13 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import {
-  ActivityLog,
-  ActivityLogDocument,
-} from './schemas/activity-log.schema';
+import { ActivityLog, ActivityLogDocument } from './schemas';
 import { ConfigService } from '@nestjs/config';
-import { ActivityLogSanitizerService } from './services/activity-log-sanitizer.service';
-import { ActivityLogQueryService } from './services/activity-log-query.service';
+import {
+  ActivityLogSanitizerService,
+  ActivityLogQueryService,
+} from './services';
 
 /**
  * Main service for activity logging functionality

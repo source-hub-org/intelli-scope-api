@@ -1,10 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Model, Document, FilterQuery, UpdateQuery } from 'mongoose';
-import {
-  PaginationOptions,
-  PaginatedResult,
-} from '../interfaces/pagination.interface';
-import { PaginationUtils } from '../utils/pagination.util';
+import { PaginationOptions, PaginatedResult } from '../interfaces';
+import { PaginationUtils } from '../utils';
 
 /**
  * Base CRUD service for MongoDB models

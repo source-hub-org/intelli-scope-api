@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ActivityLog } from '../schemas/activity-log.schema';
+import { ActivityLog } from '../schemas';
 import { Types } from 'mongoose';
 
 /**

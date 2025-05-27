@@ -10,7 +10,7 @@ import { Request } from 'express';
 export const User = createParamDecorator(
   (data: string | undefined, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest<Request>();
-    const user = request.user;
+    const user = request.user as Record<string, unknown>;
 
     // If data is provided, return the specific property
     if (data) {

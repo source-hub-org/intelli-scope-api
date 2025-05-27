@@ -1,7 +1,4 @@
-import {
-  PaginationOptions,
-  PaginatedResult,
-} from '../interfaces/pagination.interface';
+import { PaginationOptions, PaginatedResult } from '../interfaces';
 
 /**
  * Utility class for handling pagination
@@ -13,14 +10,24 @@ export class PaginationUtils {
    * @returns Pagination options
    */
   static createPaginationOptions(
-    query: Record<string, any>,
+    query: Record<string, unknown>,
   ): PaginationOptions {
-    const page = query.page ? parseInt(query.page, 10) : 1;
-    const limit = query.limit ? parseInt(query.limit, 10) : 20;
+    // Convert to number safely
+    const pageValue =
+      typeof query.page === 'string' || typeof query.page === 'number'
+        ? query.page
+        : null;
+    const limitValue =
+      typeof query.limit === 'string' || typeof query.limit === 'number'
+        ? query.limit
+        : null;
+
+    const page = pageValue ? parseInt(String(pageValue), 10) : 1;
+    const limit = limitValue ? parseInt(String(limitValue), 10) : 20;
 
     // Parse sort parameter if provided
     let sort: Record<string, 1 | -1> | undefined;
-    if (query.sort) {
+    if (query.sort && typeof query.sort === 'string') {
       sort = {};
       const sortFields = query.sort.split(',');
 

@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 
 import { Injectable, Logger } from '@nestjs/common';
-// TODO: The @nestjs/core/aspect module is not available in the current version
 // Using placeholder interfaces until the proper module is available
 interface WrapParams {
   instance: any;
