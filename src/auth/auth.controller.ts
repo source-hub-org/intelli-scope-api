@@ -11,7 +11,12 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard, JwtRefreshTokenGuard, LocalAuthGuard } from './guards';
-import { LoginDto } from './dto';
+import {
+  LoginDto,
+  LoginResponseDto,
+  TokenResponseDto,
+  RefreshTokenDto,
+} from './dto';
 import { UserDocument } from '../users';
 import {
   ApiTags,
@@ -54,27 +59,7 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({
     description: 'User has been successfully logged in',
-    schema: {
-      type: 'object',
-      properties: {
-        access_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-        refresh_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-        user: {
-          type: 'object',
-          properties: {
-            _id: { type: 'string', example: '60d21b4667d0d8992e610c85' },
-            name: { type: 'string', example: 'John Doe' },
-            email: { type: 'string', example: 'john.doe@example.com' },
-          },
-        },
-      },
-    },
+    type: LoginResponseDto,
   })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
   @UseGuards(LocalAuthGuard)
@@ -105,21 +90,10 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Refresh access token' })
+  @ApiBody({ type: RefreshTokenDto })
   @ApiOkResponse({
     description: 'Returns new access and refresh tokens',
-    schema: {
-      type: 'object',
-      properties: {
-        access_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-        refresh_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-      },
-    },
+    type: TokenResponseDto,
   })
   @ApiUnauthorizedResponse({ description: 'Invalid refresh token' })
   @ApiBearerAuth()

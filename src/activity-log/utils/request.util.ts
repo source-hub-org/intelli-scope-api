@@ -51,7 +51,7 @@ export class RequestUtils {
 
     // Prepare log data
     const logData = {
-      userId: user._id as string,
+      userId: (user._id || user.userId) as string, // Use userId if _id is not available
       actionType: 'API_ACCESS',
       timestamp: new Date(),
       actor: {

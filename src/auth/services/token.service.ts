@@ -15,6 +15,10 @@ export class TokenService {
 
   /**
    * Generate an access token for a user
+   *
+   * The access token is signed with JWT_ACCESS_SECRET and expires after
+   * JWT_ACCESS_EXPIRATION_TIME (default: 3600 seconds / 1 hour)
+   *
    * @param user User document
    * @returns Access token
    */
@@ -25,13 +29,20 @@ export class TokenService {
     };
 
     return this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_EXPIRATION', '15m'),
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+      expiresIn: parseInt(
+        this.configService.get<string>('JWT_ACCESS_EXPIRATION_TIME', '3600'),
+        10,
+      ),
     });
   }
 
   /**
    * Generate a refresh token for a user
+   *
+   * The refresh token is signed with JWT_REFRESH_SECRET and expires after
+   * JWT_REFRESH_EXPIRATION_TIME (default: 7 days)
+   *
    * @param user User document
    * @returns Refresh token
    */
@@ -44,19 +55,25 @@ export class TokenService {
 
     return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d'),
+      expiresIn: parseInt(
+        this.configService.get<string>('JWT_REFRESH_EXPIRATION_TIME', '604800'),
+        10,
+      ),
     });
   }
 
   /**
    * Verify an access token
+   *
+   * Verifies the token using JWT_ACCESS_SECRET
+   *
    * @param token Access token
    * @returns Decoded token payload or null if invalid
    */
   verifyAccessToken(token: string): any {
     try {
       return this.jwtService.verify(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
       });
     } catch (_error) {
       return null;
@@ -65,6 +82,9 @@ export class TokenService {
 
   /**
    * Verify a refresh token
+   *
+   * Verifies the token using JWT_REFRESH_SECRET
+   *
    * @param token Refresh token
    * @returns Decoded token payload or null if invalid
    */

@@ -65,34 +65,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "access_token": {
-                      "type": "string",
-                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    },
-                    "refresh_token": {
-                      "type": "string",
-                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    },
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "_id": {
-                          "type": "string",
-                          "example": "60d21b4667d0d8992e610c85"
-                        },
-                        "name": {
-                          "type": "string",
-                          "example": "John Doe"
-                        },
-                        "email": {
-                          "type": "string",
-                          "example": "john.doe@example.com"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/LoginResponseDto"
                 }
               }
             }
@@ -155,23 +128,23 @@
       "post": {
         "operationId": "AuthController_refreshToken",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Returns new access and refresh tokens",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "access_token": {
-                      "type": "string",
-                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    },
-                    "refresh_token": {
-                      "type": "string",
-                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    }
-                  }
+                  "$ref": "#/components/schemas/TokenResponseDto"
                 }
               }
             }
@@ -528,6 +501,95 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "The unique identifier of the user",
+            "example": "60d21b4667d0d8992e610c85"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the user",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "description": "The email of the user",
+            "example": "john.doe@example.com"
+          }
+        },
+        "required": [
+          "_id",
+          "name",
+          "email"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT access token for authentication",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "format": "jwt"
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "JWT refresh token for obtaining a new access token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "format": "jwt"
+          },
+          "user": {
+            "description": "User information",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "user"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "description": "JWT refresh token for obtaining a new access token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "refresh_token"
+        ]
+      },
+      "TokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT access token for authentication",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "format": "jwt"
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "JWT refresh token for obtaining a new access token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "format": "jwt"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token"
         ]
       },
       "CreateUserDto": {

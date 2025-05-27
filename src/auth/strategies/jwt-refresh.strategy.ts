@@ -13,7 +13,9 @@ import { I18nService, I18nContext } from 'nestjs-i18n';
 import * as bcrypt from 'bcrypt';
 
 interface RefreshTokenPayload {
-  userId: string;
+  sub: string; // User ID is stored in 'sub' claim
+  username: string; // Email is stored in 'username' claim
+  tokenType?: string;
   // May include iat, exp
 }
 
@@ -64,7 +66,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
       );
     }
 
-    const user = await this.usersService.findUserByIdForAuth(payload.userId); // Get full user
+    const user = await this.usersService.findUserByIdForAuth(payload.sub); // Get full user using 'sub' claim
     // Type guard to ensure user is properly typed
     if (!user || !user.hashedRefreshToken) {
       throw new ForbiddenException(
@@ -98,8 +100,8 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
     // Return userId and refreshToken for AuthService to use
     // Return a properly typed object
     return {
-      userId: payload.userId,
-      email: user.email,
+      userId: payload.sub,
+      email: payload.username,
       refreshToken: refreshTokenFromBody,
     };
   }
