@@ -6,10 +6,10 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../users';
 import { UserAuthenticationService } from '../users/services';
 import { ConfigService } from '@nestjs/config';
-import { UserDocument } from '../users/schemas';
+import { UserDocument } from '../users';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { safeObjectIdToString } from '../utils';
 import { TokenService } from './services';

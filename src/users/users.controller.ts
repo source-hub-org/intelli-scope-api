@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { JwtAuthGuard } from '../auth/guards';
+import { JwtAuthGuard } from '../auth';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import {
   ApiTags,

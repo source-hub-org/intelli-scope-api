@@ -12,7 +12,7 @@ import {
 import { AuthService } from './auth.service';
 import { JwtAuthGuard, JwtRefreshTokenGuard, LocalAuthGuard } from './guards';
 import { LoginDto } from './dto';
-import { UserDocument } from '../users/schemas';
+import { UserDocument } from '../users';
 import {
   ApiTags,
   ApiOperation,

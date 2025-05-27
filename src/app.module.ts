@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { ActivityLogModule } from './activity-log/activity-log.module';
-import { CommonModule } from './common/common.module';
+import { AuthModule } from './auth';
+import { UsersModule } from './users';
+import { ActivityLogModule } from './activity-log';
+import { CommonModule } from './common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import {

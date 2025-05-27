@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 
 /**
- * Service responsible for user authentication-related operations
+ * Service responsible for user-authentication-related operations
  */
 @Injectable()
 export class UserAuthenticationService {

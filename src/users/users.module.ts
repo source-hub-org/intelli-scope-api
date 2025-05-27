@@ -3,8 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User, UserSchema } from './schemas';
-import { UserCrudService } from './services/user-crud.service';
-import { UserAuthenticationService } from './services/user-authentication.service';
+import { UserCrudService, UserAuthenticationService } from './services';
 
 /**
  * Module for user management functionality

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UserDocument } from '../../users/schemas';
+import { UserDocument } from '../../users';
 
 /**
  * Service responsible for JWT token operations

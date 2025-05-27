@@ -8,7 +8,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from '../../users/users.service'; // Import UsersService
+import { UsersService } from '../../users'; // Import UsersService
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import * as bcrypt from 'bcrypt';
 
