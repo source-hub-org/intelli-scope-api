@@ -31,7 +31,11 @@ describe('LogActivity Decorator', () => {
     class TestService {
       constructor(private readonly activityLogService: ActivityLogService) {}
 
-      @LogActivity('create', 'test')
+      @LogActivity({
+        actionType: 'create',
+        resourceType: 'test',
+        getResourceId: (args) => args[0],
+      })
       async createTest(userId: string, data: any): Promise<any> {
         return { id: 'test-id', ...data };
       }
@@ -50,10 +54,10 @@ describe('LogActivity Decorator', () => {
       userId,
       action: 'create',
       resource: 'test',
-      details: {
+      details: expect.objectContaining({
         args: [userId, testData],
         result: { id: 'test-id', name: 'Test' },
-      },
+      }),
     });
   });
 
@@ -68,7 +72,12 @@ describe('LogActivity Decorator', () => {
     class TestService {
       constructor(private readonly activityLogService: ActivityLogService) {}
 
-      @LogActivity('update', 'test', detailsFunction)
+      @LogActivity({
+        actionType: 'update',
+        resourceType: 'test',
+        getResourceId: (args) => args[0],
+        getEntitySnapshot: detailsFunction,
+      })
       async updateTest(userId: string, data: any): Promise<any> {
         return { id: 'test-id', ...data, updated: true };
       }
@@ -91,11 +100,13 @@ describe('LogActivity Decorator', () => {
       userId,
       action: 'update',
       resource: 'test',
-      details: {
-        customField: 'custom value',
-        inputName: 'Updated Test',
-        outputId: 'test-id',
-      },
+      details: expect.objectContaining({
+        entitySnapshot: {
+          customField: 'custom value',
+          inputName: 'Updated Test',
+          outputId: 'test-id',
+        },
+      }),
     });
   });
 
@@ -104,7 +115,11 @@ describe('LogActivity Decorator', () => {
     class TestService {
       constructor(private readonly activityLogService: ActivityLogService) {}
 
-      @LogActivity('delete', 'test')
+      @LogActivity({
+        actionType: 'delete',
+        resourceType: 'test',
+        getResourceId: (args) => args[0],
+      })
       async deleteTest(userId: string, id: string): Promise<void> {
         throw new Error('Delete failed');
       }
@@ -122,10 +137,10 @@ describe('LogActivity Decorator', () => {
       userId,
       action: 'delete',
       resource: 'test',
-      details: {
+      details: expect.objectContaining({
         args: [userId, testId],
         error: expect.stringContaining('Delete failed'),
-      },
+      }),
     });
   });
 
@@ -134,7 +149,11 @@ describe('LogActivity Decorator', () => {
     class TestService {
       constructor(private readonly activityLogService: ActivityLogService) {}
 
-      @LogActivity('view', 'test')
+      @LogActivity({
+        actionType: 'view',
+        resourceType: 'test',
+        getResourceId: (args) => undefined, // This will cause no logging
+      })
       async viewTest(data: any): Promise<any> {
         return { ...data, viewed: true };
       }

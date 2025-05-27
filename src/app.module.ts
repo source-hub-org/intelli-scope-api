@@ -7,6 +7,7 @@ import { ActivityLogModule } from './activity-log';
 import { CommonModule } from './common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ClsModule } from 'nestjs-cls';
 import {
   I18nModule,
   QueryResolver,
@@ -24,6 +25,22 @@ import * as path from 'path';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+
+    // CLS (Continuation Local Storage)
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+        generateId: true,
+        idGenerator: () => {
+          // Use a safer way to generate UUID that doesn't rely on crypto global
+          return (
+            Math.random().toString(36).substring(2, 15) +
+            Math.random().toString(36).substring(2, 15)
+          );
+        },
+      },
     }),
 
     // Internationalization

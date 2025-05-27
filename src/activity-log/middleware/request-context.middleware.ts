@@ -10,6 +10,9 @@ export class RequestContextMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction): void {
     try {
+      // Since ClsModule.forRoot() is configured with middleware.mount: true,
+      // the CLS context should already be set up by the ClsMiddleware
+
       // Store request and response objects in CLS context
       this.clsService.set('request', req);
       this.clsService.set('response', res);

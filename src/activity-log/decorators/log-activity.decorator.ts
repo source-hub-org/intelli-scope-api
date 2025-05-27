@@ -1,6 +1,12 @@
 import { Logger } from '@nestjs/common';
+import 'reflect-metadata';
 
 const logger = new Logger('LogActivityDecorator');
+
+/**
+ * Metadata key for LogActivity decorator
+ */
+export const LOG_ACTIVITY_METADATA = 'log_activity_metadata';
 
 /**
  * Type definition for the details function
@@ -8,21 +14,38 @@ const logger = new Logger('LogActivityDecorator');
 export type DetailsFunction = (args: any[], result: any) => Record<string, any>;
 
 /**
- * Decorator to log activity when a method is called
- * @param action The action being performed (e.g., 'create', 'update', 'delete')
- * @param resource The resource being affected (e.g., 'user', 'product')
- * @param detailsFunction Optional function to customize the details logged
+ * Options for the LogActivity decorator
  */
-export function LogActivity(
-  action: string,
-  resource: string,
-  detailsFunction?: DetailsFunction,
-) {
+export interface LogActivityOptions {
+  actionType: string;
+  resourceType: string;
+  getResourceId?: (args: any[]) => string | undefined;
+  getResourceName?: (args: any[]) => string | undefined;
+  getEntitySnapshot?: (args: any[], result: any) => Record<string, any>;
+  getInputPayload?: (args: any[]) => Record<string, any>;
+  getChangedFields?: (
+    args: any[],
+    result: any,
+  ) => Array<{
+    field: string;
+    oldValue: any;
+    newValue: any;
+  }>;
+}
+
+/**
+ * Decorator to log activity when a method is called
+ * @param options Configuration options for activity logging
+ */
+export function LogActivity(options: LogActivityOptions) {
   return function (
     target: any,
     propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
+    // Store metadata on the method
+    Reflect.defineMetadata(LOG_ACTIVITY_METADATA, options, target, propertyKey);
+
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
@@ -40,19 +63,33 @@ export function LogActivity(
         // Execute the original method
         const result = await originalMethod.apply(this, args);
 
-        // Try to find userId in the first argument
-        const userId = typeof args[0] === 'string' ? args[0] : undefined;
+        // Try to find userId in the first argument or from the options
+        const userId =
+          typeof args[0] === 'string'
+            ? args[0]
+            : options.getResourceId
+              ? options.getResourceId(args)
+              : undefined;
 
         // Only log if we have a userId
         if (userId) {
           // Prepare details
-          let details: Record<string, any>;
+          let details: Record<string, any> = {};
 
-          if (detailsFunction) {
-            // Use custom details function if provided
-            details = detailsFunction(args, result);
-          } else {
-            // Default details include args and result
+          if (options.getEntitySnapshot) {
+            details.entitySnapshot = options.getEntitySnapshot(args, result);
+          }
+
+          if (options.getInputPayload) {
+            details.inputPayload = options.getInputPayload(args);
+          }
+
+          if (options.getChangedFields) {
+            details.changedFields = options.getChangedFields(args, result);
+          }
+
+          // If no specific details were added, include default details
+          if (Object.keys(details).length === 0) {
             details = {
               args,
               result,
@@ -62,8 +99,8 @@ export function LogActivity(
           // Log the activity
           await activityLogService.logActivity({
             userId,
-            action,
-            resource,
+            action: options.actionType,
+            resource: options.resourceType,
             details,
           });
         }
@@ -71,13 +108,18 @@ export function LogActivity(
         return result;
       } catch (error) {
         // If there's an error, log it as part of the activity
-        if (typeof args[0] === 'string') {
-          const userId = args[0];
+        const userId =
+          typeof args[0] === 'string'
+            ? args[0]
+            : options.getResourceId
+              ? options.getResourceId(args)
+              : undefined;
 
+        if (userId) {
           await activityLogService.logActivity({
             userId,
-            action,
-            resource,
+            action: options.actionType,
+            resource: options.resourceType,
             details: {
               args,
               error: error instanceof Error ? error.message : String(error),

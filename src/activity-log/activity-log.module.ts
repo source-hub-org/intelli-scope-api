@@ -24,20 +24,7 @@ import {
     MongooseModule.forFeature([
       { name: ActivityLog.name, schema: ActivityLogSchema },
     ]),
-    ClsModule.forRoot({
-      global: true,
-      middleware: {
-        mount: true,
-        generateId: true,
-        idGenerator: () => {
-          // Use a safer way to generate UUID that doesn't rely on crypto global
-          return (
-            Math.random().toString(36).substring(2, 15) +
-            Math.random().toString(36).substring(2, 15)
-          );
-        },
-      },
-    }),
+    ClsModule,
     ConfigModule, // For accessing configuration
   ],
   providers: [
@@ -62,6 +49,8 @@ import {
 })
 export class ActivityLogModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // The ClsMiddleware is automatically applied by ClsModule.forRoot() in app.module.ts
+    // We need to make sure our RequestContextMiddleware runs after it
     consumer.apply(RequestContextMiddleware).forRoutes('*'); // Apply to all routes
   }
 }
