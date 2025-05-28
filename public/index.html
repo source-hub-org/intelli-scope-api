@@ -6,10 +6,12 @@
     <title>IntelliScope API Test</title>
     <style>
         body {
+            font-size: 12px;
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            padding-bottom: 100px;
         }
         h1 {
             color: #333;
@@ -43,11 +45,24 @@
         }
         #response {
             margin-top: 20px;
-            white-space: pre-wrap;
-            background-color: #f8f8f8;
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            width: calc(100% - 20px);
+            height: 600px;
+            line-height: 24px !important;
+            font-size: 12px;
+            padding: 12px;
+            font-family: monospace;            
+            background: 
+                repeating-linear-gradient(
+                to bottom,
+                #fbf1c7,          /* background */
+                #fbf1c7 23px,
+                #ebdbb2 24px       /* soft line */
+                );
+            color: #3c3836;        /* dark text */
+            border: 1px solid #d5c4a1;
+            resize: vertical;
+            padding: 0 10px;
         }
     </style>
 </head>
@@ -79,7 +94,7 @@
         <button onclick="testAuthEndpoint('GET', '/api/users')">Test</button>
     </div>
 
-    <div id="response">Response will appear here...</div>
+    <textarea id="response" readonly></textarea>Response will appear here...</textarea>
 
     <script>
         async function testEndpoint(method, url) {
