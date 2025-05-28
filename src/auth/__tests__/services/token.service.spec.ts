@@ -110,7 +110,10 @@ describe('TokenService', () => {
       jest.spyOn(jwtService, 'verify').mockReturnValue(mockPayload);
 
       // Act
-      const result = service.verifyAccessToken('access_token');
+      const result = service.verifyAccessToken('access_token') as {
+        sub: string;
+        username: string;
+      };
 
       // Assert
       const verifySpy = jest.spyOn(jwtService, 'verify');
@@ -127,7 +130,7 @@ describe('TokenService', () => {
       });
 
       // Act
-      const result = service.verifyAccessToken('invalid_token');
+      const result = service.verifyAccessToken('invalid_token') as null;
 
       // Assert
       const verifySpy = jest.spyOn(jwtService, 'verify');
@@ -149,7 +152,11 @@ describe('TokenService', () => {
       jest.spyOn(jwtService, 'verify').mockReturnValue(mockPayload);
 
       // Act
-      const result = service.verifyRefreshToken('refresh_token');
+      const result = service.verifyRefreshToken('refresh_token') as {
+        sub: string;
+        username: string;
+        tokenType: string;
+      };
 
       // Assert
       const verifySpy = jest.spyOn(jwtService, 'verify');
@@ -166,7 +173,7 @@ describe('TokenService', () => {
       });
 
       // Act
-      const result = service.verifyRefreshToken('invalid_token');
+      const result = service.verifyRefreshToken('invalid_token') as null;
 
       // Assert
       const verifySpy = jest.spyOn(jwtService, 'verify');

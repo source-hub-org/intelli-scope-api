@@ -65,7 +65,7 @@ describe('LogActivity Decorator', () => {
       result: { id: 'test-id', name: 'Test' },
     };
     expect(logActivitySpy).toHaveBeenCalledWith(
-      expect.objectContaining({
+      expect.objectContaining<Record<string, unknown>>({
         userId,
         action: 'create',
         resource: 'test',
@@ -137,7 +137,7 @@ describe('LogActivity Decorator', () => {
       },
     };
     expect(logActivitySpy).toHaveBeenCalledWith(
-      expect.objectContaining({
+      expect.objectContaining<Record<string, unknown>>({
         userId,
         action: 'update',
         resource: 'test',
@@ -177,7 +177,7 @@ describe('LogActivity Decorator', () => {
       error: expect.stringContaining('Delete failed'),
     };
     expect(logActivitySpy).toHaveBeenCalledWith(
-      expect.objectContaining({
+      expect.objectContaining<Record<string, unknown>>({
         userId,
         action: 'delete',
         resource: 'test',

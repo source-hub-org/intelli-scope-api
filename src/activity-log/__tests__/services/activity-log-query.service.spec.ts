@@ -8,15 +8,20 @@ import {
 } from '../../schemas/activity-log.schema';
 import { createMockModel } from '../../../common/__tests__/test-utils';
 
-// Helper function to create mock queries
-function createMockQuery(_resolvedValue: unknown): any {
-  const mockQuery = {
+/**
+ * Creates a mock query object for testing
+ *
+ * @param resolvedValue - The value that will be resolved when exec() is called
+ * @returns A mock query object with chainable methods
+ */
+
+function createMockQuery(resolvedValue: unknown): any {
+  return {
     sort: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
-    exec: jest.fn().mockResolvedValueOnce(_resolvedValue),
+    exec: jest.fn().mockResolvedValueOnce(resolvedValue),
   };
-  return mockQuery;
 }
 
 describe('ActivityLogQueryService', () => {
