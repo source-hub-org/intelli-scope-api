@@ -20,7 +20,6 @@ export function safeObjectIdToString(id: unknown): string {
   // If it has a toString method (like ObjectId), use it
   if (
     typeof id === 'object' &&
-    id !== null &&
     'toString' in id &&
     typeof (id as { toString(): string }).toString === 'function'
   ) {

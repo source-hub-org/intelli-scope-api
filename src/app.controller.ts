@@ -16,7 +16,7 @@ export class AppController {
   })
   @Get()
   getHello(@I18n() i18n: I18nContext): string {
-    // Để lấy ngôn ngữ hiện tại: i18n.lang
+    // To get current language: i18n.lang
     return i18n.t('translation.HELLO', { args: { name: 'NestJS User' } });
   }
 

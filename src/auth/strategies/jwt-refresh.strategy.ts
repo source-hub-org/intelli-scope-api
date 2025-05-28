@@ -8,12 +8,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from '../users/users.service'; // Import UsersService
+import { UsersService } from '../../users'; // Import UsersService
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import * as bcrypt from 'bcrypt';
 
 interface RefreshTokenPayload {
-  userId: string;
+  sub: string; // User ID is stored in 'sub' claim
+  username: string; // Email is stored in 'username' claim
+  tokenType?: string;
   // May include iat, exp
 }
 
@@ -64,7 +66,8 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
       );
     }
 
-    const user = await this.usersService.findUserByIdForAuth(payload.userId); // Get full user
+    const user = await this.usersService.findUserByIdForAuth(payload.sub); // Get full user using 'sub' claim
+    // Type guard to ensure user is properly typed
     if (!user || !user.hashedRefreshToken) {
       throw new ForbiddenException(
         this.i18n.t('translation.AUTH.ACCESS_DENIED', {
@@ -82,8 +85,8 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
         refreshTokenFromBody,
         user.hashedRefreshToken,
       );
-    } catch (error) {
-      console.error('Error comparing refresh tokens:', error);
+    } catch (_error) {
+      console.error('Error comparing refresh tokens:', _error);
       isRefreshTokenMatching = false;
     }
     if (!isRefreshTokenMatching) {
@@ -97,8 +100,8 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
     // Return userId and refreshToken for AuthService to use
     // Return a properly typed object
     return {
-      userId: payload.userId,
-      email: user.email,
+      userId: payload.sub,
+      email: payload.username,
       refreshToken: refreshTokenFromBody,
     };
   }

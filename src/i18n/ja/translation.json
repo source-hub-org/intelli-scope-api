@@ -1,4 +1,10 @@
 {
+  "COMMON": {
+    "VALIDATION_ERROR": "バリデーションエラーが発生しました。",
+    "INTERNAL_ERROR": "内部サーバーエラーが発生しました。",
+    "DATABASE_ERROR": "データベースエラーが発生しました。",
+    "DUPLICATE_KEY": "このキーを持つレコードはすでに存在します。"
+  },
   "VALIDATION": {
     "EMAIL_NOT_EMPTY": "メールアドレスは必須です。",
     "EMAIL_INVALID_FORMAT": "有効なメールアドレス形式である必要があります。",

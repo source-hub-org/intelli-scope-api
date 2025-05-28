@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth';
+import { UsersModule } from './users';
+import { ActivityLogModule } from './activity-log';
+import { CommonModule } from './common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ClsModule } from 'nestjs-cls';
 import {
   I18nModule,
   QueryResolver,
@@ -13,12 +16,34 @@ import {
 } from 'nestjs-i18n';
 import * as path from 'path';
 
+/**
+ * Main application module
+ */
 @Module({
   imports: [
+    // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    // CLS (Continuation Local Storage)
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+        generateId: true,
+        idGenerator: () => {
+          // Use a safer way to generate UUID that doesn't rely on crypto global
+          return (
+            Math.random().toString(36).substring(2, 15) +
+            Math.random().toString(36).substring(2, 15)
+          );
+        },
+      },
+    }),
+
+    // Internationalization
     I18nModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         // Determine if we're in development or production
@@ -45,6 +70,8 @@ import * as path from 'path';
       inject: [ConfigService],
       imports: [ConfigModule],
     }),
+
+    // Database
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -58,6 +85,10 @@ import * as path from 'path';
       }),
       inject: [ConfigService],
     }),
+
+    // Application modules
+    CommonModule,
+    ActivityLogModule,
     AuthModule,
     UsersModule,
   ],

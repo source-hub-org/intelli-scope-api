@@ -33,6 +33,8 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-call': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-base-to-string': 'warn',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { 
         'argsIgnorePattern': '^_',
         'varsIgnorePattern': '^_',

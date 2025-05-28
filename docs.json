@@ -1,0 +1,23 @@
+{
+  "name": "Intelli Scope API Docs",
+  "theme": "mint",
+  "colors": {
+    "primary": "#4F46E5"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Endpoints",
+            "openapi": {
+              "source": "./openapi.json",
+              "directory": "api-reference"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

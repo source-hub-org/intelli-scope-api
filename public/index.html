@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliScope API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .endpoint {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .endpoint h2 {
+            margin-top: 0;
+        }
+        pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #response {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>IntelliScope API Test</h1>
+    
+    <div class="endpoint">
+        <h2>GET /api</h2>
+        <p>Get a hello message</p>
+        <button onclick="testEndpoint('GET', '/api')">Test</button>
+    </div>
+
+    <div class="endpoint">
+        <h2>POST /api/auth/login</h2>
+        <p>Login with email and password</p>
+        <pre>
+{
+    "email": "user@example.com",
+    "password": "password123"
+}
+        </pre>
+        <button onclick="testLogin()">Test</button>
+    </div>
+
+    <div class="endpoint">
+        <h2>GET /api/users</h2>
+        <p>Get all users (requires authentication)</p>
+        <input type="text" id="token" placeholder="JWT Token" style="width: 100%; padding: 8px; margin-top: 10px;">
+        <button onclick="testAuthEndpoint('GET', '/api/users')">Test</button>
+    </div>
+
+    <div id="response">Response will appear here...</div>
+
+    <script>
+        async function testEndpoint(method, url) {
+            const responseElement = document.getElementById('response');
+            responseElement.textContent = 'Loading...';
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                responseElement.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseElement.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testLogin() {
+            const responseElement = document.getElementById('response');
+            responseElement.textContent = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'user@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                responseElement.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseElement.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testAuthEndpoint(method, url) {
+            const responseElement = document.getElementById('response');
+            const token = document.getElementById('token').value;
+            
+            if (!token) {
+                responseElement.textContent = 'Please enter a JWT token';
+                return;
+            }
+            
+            responseElement.textContent = 'Loading...';
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                responseElement.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseElement.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

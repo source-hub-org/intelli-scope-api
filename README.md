@@ -1,98 +1,132 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# IntelliScope API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A modern, secure, and scalable RESTful API built with NestJS, MongoDB, and TypeScript.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- **Authentication & Authorization**: JWT-based authentication with access and refresh tokens
+- **User Management**: Complete user management system
+- **Activity Logging**: Track user activities and system events
+- **Internationalization (i18n)**: Multi-language support
+- **API Documentation**: Swagger/OpenAPI documentation
+- **Security**: Implements best practices with Helmet, CORS, and more
+- **Database**: MongoDB integration with Mongoose ODM
+- **Configuration**: Environment-based configuration
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+- **Framework**: NestJS 11
+- **Language**: TypeScript
+- **Database**: MongoDB
+- **Documentation**: Swagger/OpenAPI
+- **Authentication**: Passport, JWT
+- **Validation**: class-validator, class-transformer
+- **Internationalization**: nestjs-i18n
+- **Security**: Helmet, compression
 
-```bash
-$ yarn install
-```
+## Getting Started
 
-## Compile and run the project
+### Prerequisites
 
-```bash
-# development
-$ yarn run start
+- Node.js (v18 or later)
+- MongoDB (local or remote)
+- npm or yarn
 
-# watch mode
-$ yarn run start:dev
+### Installation
 
-# production mode
-$ yarn run start:prod
-```
+1. Clone the repository:
 
-## Run tests
+   ```bash
+   git clone https://github.com/yourusername/intelli-scope-api.git
+   cd intelli-scope-api
+   ```
 
-```bash
-# unit tests
-$ yarn run test
+2. Install dependencies:
 
-# e2e tests
-$ yarn run test:e2e
+   ```bash
+   npm install
+   ```
 
-# test coverage
-$ yarn run test:cov
-```
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   Then edit the `.env` file with your configuration.
 
-## Deployment
+### Running the Application
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+#### Development mode:
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+#### Production mode:
 
-## Resources
+```bash
+npm run build
+npm run start:prod
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+#### Debug mode:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npm run start:debug
+```
 
-## Support
+### API Documentation
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+When running in development mode, Swagger documentation is available at:
 
-## Stay in touch
+```
+http://localhost:3000/docs
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Available Scripts
+
+- `npm run build`: Build the application
+- `npm run format`: Format code with Prettier
+- `npm run start`: Start the application
+- `npm run start:dev`: Start in development mode with hot-reload
+- `npm run start:debug`: Start in debug mode
+- `npm run start:prod`: Start in production mode
+- `npm run lint`: Lint the code
+- `npm run test`: Run tests
+- `npm run test:watch`: Run tests in watch mode
+- `npm run test:cov`: Run tests with coverage
+- `npm run test:e2e`: Run end-to-end tests
+- `npm run docs`: Start Mintlify documentation server
+
+## Project Structure
+
+```
+src/
+├── activity-log/     # Activity logging module
+├── auth/             # Authentication module
+├── common/           # Shared utilities, pipes, filters, etc.
+├── i18n/             # Internationalization files
+├── users/            # User management module
+├── app.controller.ts # Main application controller
+├── app.module.ts     # Main application module
+├── app.service.ts    # Main application service
+└── main.ts           # Application entry point
+```
+
+## Environment Variables
+
+| Variable                    | Description                                  | Default     |
+| --------------------------- | -------------------------------------------- | ----------- |
+| PORT                        | Application port                             | 3000        |
+| NODE_ENV                    | Environment (development/production)         | development |
+| MONGODB_URI                 | MongoDB connection string                    | -           |
+| DEFAULT_LANGUAGE            | Default language for i18n                    | en          |
+| JWT_ACCESS_SECRET           | Secret for JWT access tokens                 | -           |
+| JWT_REFRESH_SECRET          | Secret for JWT refresh tokens                | -           |
+| JWT_ACCESS_EXPIRATION_TIME  | Expiration time for access tokens (seconds)  | 3600        |
+| JWT_REFRESH_EXPIRATION_TIME | Expiration time for refresh tokens (seconds) | 604800      |
+| CORS_ORIGIN                 | CORS origin setting                          | \*          |
+| API_PREFIX                  | API route prefix                             | api         |
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the [UNLICENSED](LICENSE) license.

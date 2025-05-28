@@ -14,9 +14,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CreateUserDto, UpdateUserDto } from './dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import {
   ApiTags,

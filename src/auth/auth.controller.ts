@@ -10,12 +10,14 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { LoginDto } from './dto/login.dto';
-import { JwtRefreshTokenGuard } from './jwt-refresh.guard';
-import { LocalAuthGuard } from './local-auth.guard';
-// import { I18n, I18nContext } from 'nestjs-i18n';
-import { UserDocument } from '../users/schemas/user.schema';
+import { JwtAuthGuard, JwtRefreshTokenGuard, LocalAuthGuard } from './guards';
+import {
+  LoginDto,
+  LoginResponseDto,
+  TokenResponseDto,
+  RefreshTokenDto,
+} from './dto';
+import { UserDocument } from '../users';
 import {
   ApiTags,
   ApiOperation,
@@ -26,12 +28,12 @@ import {
 } from '@nestjs/swagger';
 
 // Interface for request after passing through LocalAuthGuard
-interface LoginRequest extends Request {
+export interface LoginRequest extends Request {
   user: Omit<UserDocument, 'password_hash' | 'hashedRefreshToken'>; // User has been validated by LocalStrategy
 }
 
 // Interface for request after passing through JwtAuthGuard
-interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Request {
   user: {
     userId: string;
     email: string;
@@ -40,7 +42,7 @@ interface AuthenticatedRequest extends Request {
 }
 
 // Interface for request after passing through JwtRefreshTokenGuard
-interface RefreshTokenRequest extends Request {
+export interface RefreshTokenRequest extends Request {
   user: {
     userId: string;
     email: string;
@@ -57,27 +59,7 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({
     description: 'User has been successfully logged in',
-    schema: {
-      type: 'object',
-      properties: {
-        access_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-        refresh_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-        user: {
-          type: 'object',
-          properties: {
-            _id: { type: 'string', example: '60d21b4667d0d8992e610c85' },
-            name: { type: 'string', example: 'John Doe' },
-            email: { type: 'string', example: 'john.doe@example.com' },
-          },
-        },
-      },
-    },
+    type: LoginResponseDto,
   })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
   @UseGuards(LocalAuthGuard)
@@ -108,21 +90,10 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Refresh access token' })
+  @ApiBody({ type: RefreshTokenDto })
   @ApiOkResponse({
     description: 'Returns new access and refresh tokens',
-    schema: {
-      type: 'object',
-      properties: {
-        access_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-        refresh_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-      },
-    },
+    type: TokenResponseDto,
   })
   @ApiUnauthorizedResponse({ description: 'Invalid refresh token' })
   @ApiBearerAuth()

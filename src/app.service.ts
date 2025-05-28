@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class AppService {
   getHello(): object {
     return {
-      message: 'Welcome to intelliscope api',
+      message: 'Welcome to intelligences scope api',
     };
   }
 }

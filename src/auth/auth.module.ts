@@ -4,15 +4,26 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-import { UsersModule } from '../users/users.module'; // Ensure UsersModule is imported
-import { JwtStrategy } from './jwt.strategy';
-import { JwtRefreshTokenStrategy } from './jwt-refresh.strategy';
+import { UsersModule } from '../users';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { LocalStrategy } from './local.strategy';
 
+// Import strategies from the strategies folder
+import {
+  JwtStrategy,
+  JwtRefreshTokenStrategy,
+  LocalStrategy,
+} from './strategies';
+
+// Import services
+import { TokenService } from './services';
+
+/**
+ * Module for authentication functionality
+ */
 @Module({
   imports: [
-    UsersModule, // UsersService will be injected into AuthService and Strategies
+    // Import required modules
+    UsersModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -27,10 +38,21 @@ import { LocalStrategy } from './local.strategy';
       }),
       inject: [ConfigService],
     }),
-    ConfigModule, // ConfigService will be injected
+    ConfigModule,
   ],
-  providers: [AuthService, JwtStrategy, JwtRefreshTokenStrategy, LocalStrategy],
+  providers: [
+    // Main service
+    AuthService,
+
+    // Specialized services
+    TokenService,
+
+    // Strategies
+    JwtStrategy,
+    JwtRefreshTokenStrategy,
+    LocalStrategy,
+  ],
   controllers: [AuthController],
-  exports: [JwtModule, PassportModule, AuthService], // AuthService may need to be exported if used by other modules
+  exports: [JwtModule, PassportModule, AuthService, TokenService],
 })
 export class AuthModule {}

@@ -3,8 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { TokenPayload } from './auth.service';
-import { UsersService } from '../users/users.service'; // Import UsersService
+import { UsersService } from '../../users'; // Import UsersService
 import { I18nService, I18nContext } from 'nestjs-i18n';
 
 @Injectable()
@@ -30,9 +29,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: TokenPayload): Promise<any> {
+  async validate(payload: {
+    sub: string;
+    username: string;
+    [key: string]: unknown;
+  }): Promise<{ userId: string; email: string; name: string }> {
     // Check if the user exists (important if the user was deleted after the token was issued)
-    const user = await this.usersService.findById(payload.userId);
+    const userId = payload.sub; // Use 'sub' from JWT payload which contains the user ID
+    const user = await this.usersService.findById(userId);
     if (!user) {
       throw new UnauthorizedException(
         this.i18n.t('translation.AUTH.ACCESS_DENIED', {
@@ -41,6 +45,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       );
     }
     // Return basic user information, or the entire 'user' object if needed in req.user
-    return { userId: payload.userId, email: payload.email, name: user.name };
+    return {
+      userId: userId,
+      email: payload.username, // Use 'username' from JWT payload which contains the email
+      name: user.name,
+    };
   }
 }
