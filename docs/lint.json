@@ -107,6 +107,18 @@
       "description": "Async IIFE without proper error handling in tests",
       "example": "(async () => { /* test code */ })();",
       "fix": "Add proper error handling and use void operator to mark as intentionally ignored. For example: void (async () => { try { /* test code */ } catch (error) { done(error instanceof Error ? error : new Error(String(error))); } })();"
+    },
+    {
+      "type": "i18n-context-mocking",
+      "description": "Mocking I18nContext.current() with improper typing",
+      "example": "jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en' } as any);",
+      "fix": "Provide a more complete mock object with the necessary properties and methods. For example: jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en', t: jest.fn().mockImplementation((key: string) => `translated:${key}`) } as any);"
+    },
+    {
+      "type": "mongoose-query-mocking",
+      "description": "Mocking Mongoose Query objects without proper typing",
+      "example": "jest.spyOn(model, 'findById').mockReturnValueOnce({ exec: jest.fn().mockResolvedValueOnce(mockData) } as any);",
+      "fix": "Create properly typed mock queries using the Query generic type. For example: const mockExecFn = jest.fn().mockResolvedValueOnce(mockData); const mockQuery = { exec: mockExecFn } as unknown as Query<unknown, unknown, {}, YourDocumentType>; jest.spyOn(model, 'findById').mockReturnValueOnce(mockQuery);"
     }
   ]
 }
