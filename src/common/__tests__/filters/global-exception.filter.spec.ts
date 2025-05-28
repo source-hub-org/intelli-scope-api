@@ -12,7 +12,6 @@ import { I18nService, I18nContext } from 'nestjs-i18n';
 import { GlobalExceptionFilter } from '../../filters/global-exception.filter';
 import { ConfigService } from '@nestjs/config';
 import { createMockI18nService } from '../test-utils';
-import { Request, Response } from 'express';
 
 // Define types for our mock objects
 interface MockRequest {
@@ -26,9 +25,10 @@ interface MockResponse {
   json: jest.Mock;
 }
 
+// Define a more specific type for the HTTP context
 interface MockHttpContext {
-  getRequest: jest.Mock;
-  getResponse: jest.Mock;
+  getRequest: () => MockRequest;
+  getResponse: () => MockResponse;
   getNext: jest.Mock;
 }
 
@@ -42,8 +42,8 @@ function createMockContext(url = '/api/test', method = 'GET'): ArgumentsHost {
   };
 
   // Create the mock response with proper typing
-  const statusMock = jest.fn().mockReturnThis() as jest.Mock<MockResponse>;
-  const jsonMock = jest.fn() as jest.Mock<void, [Record<string, unknown>]>;
+  const statusMock = jest.fn().mockReturnThis();
+  const jsonMock = jest.fn();
 
   const mockResponse: MockResponse = {
     status: statusMock,
@@ -51,29 +51,26 @@ function createMockContext(url = '/api/test', method = 'GET'): ArgumentsHost {
   };
 
   // Create the HTTP context with proper typing
-  const getRequestMock = jest
-    .fn()
-    .mockReturnValue(mockRequest) as jest.Mock<MockRequest>;
-  const getResponseMock = jest
-    .fn()
-    .mockReturnValue(mockResponse) as jest.Mock<MockResponse>;
+  const getRequestMock = jest.fn().mockReturnValue(mockRequest);
+  const getResponseMock = jest.fn().mockReturnValue(mockResponse);
   const getNextMock = jest.fn();
 
   const mockHttpContext: MockHttpContext = {
-    getRequest: getRequestMock,
-    getResponse: getResponseMock,
+    getRequest: getRequestMock as () => MockRequest,
+    getResponse: getResponseMock as () => MockResponse,
     getNext: getNextMock,
   };
 
   // Create and return the ArgumentsHost
-  return {
+  const mockArgumentsHost: ArgumentsHost = {
     switchToHttp: jest.fn().mockReturnValue(mockHttpContext),
     switchToRpc: jest.fn(),
     switchToWs: jest.fn(),
     getType: jest.fn().mockReturnValue('http'),
     getArgs: jest.fn().mockReturnValue([]),
     getArgByIndex: jest.fn(),
-  } as ArgumentsHost;
+  };
+  return mockArgumentsHost;
 }
 
 // Define response type for better type safety
@@ -99,15 +96,16 @@ describe('GlobalExceptionFilter', () => {
       },
     } as unknown as I18nContext<unknown>;
 
-    jest.spyOn(I18nContext, 'current').mockReturnValue(i18nContextMock);
+    // Use a variable to store the spy to avoid unbound method issues
+    const i18nContextCurrentSpy = jest.spyOn(I18nContext, 'current');
+    i18nContextCurrentSpy.mockReturnValue(i18nContextMock);
 
     // Mock Logger to prevent console output during tests
-    const _loggerErrorSpy = jest
-      .spyOn(Logger.prototype, 'error')
-      .mockImplementation(() => {});
-    const _loggerWarnSpy = jest
-      .spyOn(Logger.prototype, 'warn')
-      .mockImplementation(() => {});
+    // Store spies in variables to avoid unbound method issues
+    const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error');
+    loggerErrorSpy.mockImplementation(() => {});
+    const loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn');
+    loggerWarnSpy.mockImplementation(() => {});
 
     const mockConfigService = {
       get: jest
@@ -153,15 +151,18 @@ describe('GlobalExceptionFilter', () => {
 
       // Get the mock response in a type-safe way
       const httpContext = mockContext.switchToHttp();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const response = httpContext.getResponse();
 
       // Act
       filter.catch(exception, mockContext);
 
       // Assert - using the response methods directly
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.json).toHaveBeenCalledWith(
-        expect.objectContaining<Partial<ErrorResponse>>({
+        expect.objectContaining<ErrorResponse>({
           statusCode: HttpStatus.BAD_REQUEST,
           message: 'Test error',
           error: 'Bad Request',
@@ -176,15 +177,18 @@ describe('GlobalExceptionFilter', () => {
 
       // Get the mock response in a type-safe way
       const httpContext = mockContext.switchToHttp();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const response = httpContext.getResponse();
 
       // Act
       filter.catch(exception, mockContext);
 
       // Assert
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.json).toHaveBeenCalledWith(
-        expect.objectContaining<Partial<ErrorResponse>>({
+        expect.objectContaining<ErrorResponse>({
           statusCode: HttpStatus.NOT_FOUND,
           message: 'Resource not found',
           error: 'Not Found',
@@ -210,20 +214,22 @@ describe('GlobalExceptionFilter', () => {
 
       // Get the mock response in a type-safe way
       const httpContext = mockContext.switchToHttp();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const response = httpContext.getResponse();
 
       // Mock i18n translate method
-      const _i18nSpy = jest
-        .spyOn(i18nService, 't')
-        .mockReturnValue('Validation failed');
+      const i18nSpy = jest.spyOn(i18nService, 't');
+      i18nSpy.mockReturnValue('Validation failed');
 
       // Act
       filter.catch(exception, mockContext);
 
       // Assert
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.json).toHaveBeenCalledWith(
-        expect.objectContaining<Partial<ErrorResponse>>({
+        expect.objectContaining<ErrorResponse>({
           statusCode: HttpStatus.BAD_REQUEST,
           message: 'Validation failed',
           error: 'Bad Request',
@@ -241,17 +247,20 @@ describe('GlobalExceptionFilter', () => {
 
       // Get the mock response in a type-safe way
       const httpContext = mockContext.switchToHttp();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const response = httpContext.getResponse();
 
       // Act
       filter.catch(exception, mockContext);
 
       // Assert
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.status).toHaveBeenCalledWith(
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.json).toHaveBeenCalledWith(
-        expect.objectContaining<Partial<ErrorResponse>>({
+        expect.objectContaining<ErrorResponse>({
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
           message: 'Something went wrong',
           error: 'Internal Server Error',
@@ -266,12 +275,14 @@ describe('GlobalExceptionFilter', () => {
 
       // Get the mock response in a type-safe way
       const httpContext = mockContext.switchToHttp();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const response = httpContext.getResponse();
 
       // Act
       filter.catch(exception, mockContext);
 
       // Assert
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.status).toHaveBeenCalledWith(
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
@@ -283,6 +294,7 @@ describe('GlobalExceptionFilter', () => {
         error: 'Internal Server Error',
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(response.json).toHaveBeenCalledWith(
         expect.objectContaining<ErrorResponse>(expectedResponse),
       );
