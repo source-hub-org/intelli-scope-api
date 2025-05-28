@@ -3,6 +3,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { LocalStrategy } from '../../strategies/local.strategy';
 import { AuthService } from '../../auth.service';
+import { UserDocument } from '../../../users';
 import { createMockI18nService } from '../../../common/__tests__/test-utils';
 
 describe('LocalStrategy', () => {
@@ -22,7 +23,9 @@ describe('LocalStrategy', () => {
 
   beforeEach(async () => {
     // Mock I18nContext.current()
-    jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en' } as any);
+    jest
+      .spyOn(I18nContext, 'current')
+      .mockReturnValue({ lang: 'en' } as I18nContext<unknown>);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -56,7 +59,12 @@ describe('LocalStrategy', () => {
       // Arrange
       jest
         .spyOn(authService, 'validateUser')
-        .mockResolvedValue(mockUser as any);
+        .mockResolvedValue(
+          mockUser as Omit<
+            UserDocument,
+            'password_hash' | 'hashedRefreshToken'
+          >,
+        );
 
       // Act
       const result = await strategy.validate('test@example.com', 'password');
@@ -73,7 +81,12 @@ describe('LocalStrategy', () => {
       // Arrange
       jest
         .spyOn(authService, 'validateUser')
-        .mockResolvedValue(undefined as any);
+        .mockResolvedValue(
+          undefined as unknown as Omit<
+            UserDocument,
+            'password_hash' | 'hashedRefreshToken'
+          >,
+        );
 
       // Act & Assert
       await expect(

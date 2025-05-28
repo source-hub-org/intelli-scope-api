@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
-// Removed unused import: LoginDto
+// Import the request interfaces from auth.controller
+import type {
+  LoginRequest,
+  AuthenticatedRequest,
+  RefreshTokenRequest,
+} from '../auth.controller';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -59,7 +64,7 @@ describe('AuthController', () => {
       jest.spyOn(authService, 'login').mockResolvedValue(mockLoginResponse);
 
       // Act
-      const result = await controller.login(mockRequest as any);
+      const result = await controller.login(mockRequest as LoginRequest);
 
       // Assert
       const loginSpy = jest.spyOn(authService, 'login');
@@ -79,7 +84,7 @@ describe('AuthController', () => {
       const mockRequest = { user: mockUser };
 
       // Act
-      const result = controller.getProfile(mockRequest as any);
+      const result = controller.getProfile(mockRequest as AuthenticatedRequest);
 
       // Assert
       expect(result).toEqual(mockUser);
@@ -106,7 +111,9 @@ describe('AuthController', () => {
         .mockResolvedValue(mockRefreshResponse);
 
       // Act
-      const result = await controller.refreshToken(mockRequest as any);
+      const result = await controller.refreshToken(
+        mockRequest as RefreshTokenRequest,
+      );
 
       // Assert
       const refreshTokenSpy = jest.spyOn(authService, 'refreshToken');
@@ -130,7 +137,9 @@ describe('AuthController', () => {
       jest.spyOn(authService, 'logout').mockResolvedValue(mockLogoutResponse);
 
       // Act
-      const result = await controller.logout(mockRequest as any);
+      const result = await controller.logout(
+        mockRequest as AuthenticatedRequest,
+      );
 
       // Assert
       const logoutSpy = jest.spyOn(authService, 'logout');

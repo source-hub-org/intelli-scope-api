@@ -29,9 +29,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(
-    payload: any,
-  ): Promise<{ userId: string; email: string; name: string }> {
+  async validate(payload: {
+    sub: string;
+    username: string;
+    [key: string]: unknown;
+  }): Promise<{ userId: string; email: string; name: string }> {
     // Check if the user exists (important if the user was deleted after the token was issued)
     const userId = payload.sub; // Use 'sub' from JWT payload which contains the user ID
     const user = await this.usersService.findById(userId);

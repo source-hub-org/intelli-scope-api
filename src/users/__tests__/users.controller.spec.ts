@@ -93,7 +93,7 @@ describe('UsersController', () => {
     const mockContext = {
       lang: 'en',
       t: jest.fn().mockImplementation((key: string) => `translated:${key}`),
-      service: {} as any,
+      service: {} as unknown as I18nService,
       id: 'test-id',
       i18n: jest.fn(),
       translate: jest

@@ -60,15 +60,18 @@ describe('LogActivity Decorator', () => {
     // Assert
     expect(result).toEqual({ id: 'test-id', name: 'Test' });
     const logActivitySpy = jest.spyOn(activityLogService, 'logActivity');
-    expect(logActivitySpy).toHaveBeenCalledWith({
-      userId,
-      action: 'create',
-      resource: 'test',
-      details: expect.objectContaining<Record<string, unknown>>({
-        args: [userId, testData],
-        result: { id: 'test-id', name: 'Test' },
+    const expectedDetails: Record<string, unknown> = {
+      args: [userId, testData],
+      result: { id: 'test-id', name: 'Test' },
+    };
+    expect(logActivitySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId,
+        action: 'create',
+        resource: 'test',
+        details: expect.objectContaining(expectedDetails),
       }),
-    });
+    );
   });
 
   it('should log activity with custom details function', async () => {
@@ -126,18 +129,21 @@ describe('LogActivity Decorator', () => {
       updated: true,
     });
     const logActivitySpy = jest.spyOn(activityLogService, 'logActivity');
-    expect(logActivitySpy).toHaveBeenCalledWith({
-      userId,
-      action: 'update',
-      resource: 'test',
-      details: expect.objectContaining<Record<string, unknown>>({
-        entitySnapshot: {
-          customField: 'custom value',
-          inputName: 'Updated Test',
-          outputId: 'test-id',
-        },
+    const expectedDetails: Record<string, unknown> = {
+      entitySnapshot: {
+        customField: 'custom value',
+        inputName: 'Updated Test',
+        outputId: 'test-id',
+      },
+    };
+    expect(logActivitySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId,
+        action: 'update',
+        resource: 'test',
+        details: expect.objectContaining(expectedDetails),
       }),
-    });
+    );
   });
 
   it('should handle errors and still log activity', async () => {
@@ -166,15 +172,18 @@ describe('LogActivity Decorator', () => {
       'Delete failed',
     );
     const logActivitySpy = jest.spyOn(activityLogService, 'logActivity');
-    expect(logActivitySpy).toHaveBeenCalledWith({
-      userId,
-      action: 'delete',
-      resource: 'test',
-      details: expect.objectContaining<Record<string, unknown>>({
-        args: [userId, testId],
-        error: expect.stringContaining('Delete failed') as unknown,
+    const expectedDetails: Record<string, unknown> = {
+      args: [userId, testId],
+      error: expect.stringContaining('Delete failed'),
+    };
+    expect(logActivitySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId,
+        action: 'delete',
+        resource: 'test',
+        details: expect.objectContaining(expectedDetails),
       }),
-    });
+    );
   });
 
   it('should not log activity when userId is not provided', async () => {

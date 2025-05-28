@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { TokenService } from '../../services/token.service';
 import { createMockConfigService } from '../../../common/__tests__/test-utils';
+import { UserDocument } from '../../../users';
 
 describe('TokenService', () => {
   let service: TokenService;
@@ -59,7 +60,7 @@ describe('TokenService', () => {
       jest.spyOn(jwtService, 'sign').mockReturnValue('access_token');
 
       // Act
-      const result = service.generateAccessToken(mockUser as any);
+      const result = service.generateAccessToken(mockUser as UserDocument);
 
       // Assert
       const signSpy = jest.spyOn(jwtService, 'sign');
@@ -83,7 +84,7 @@ describe('TokenService', () => {
       jest.spyOn(jwtService, 'sign').mockReturnValue('refresh_token');
 
       // Act
-      const result = service.generateRefreshToken(mockUser as any);
+      const result = service.generateRefreshToken(mockUser as UserDocument);
 
       // Assert
       const signSpy = jest.spyOn(jwtService, 'sign');

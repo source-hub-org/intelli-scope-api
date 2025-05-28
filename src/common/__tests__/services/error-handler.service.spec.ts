@@ -15,7 +15,9 @@ describe('ErrorHandlerService', () => {
 
   beforeEach(async () => {
     // Mock I18nContext.current()
-    jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en' } as any);
+    jest
+      .spyOn(I18nContext, 'current')
+      .mockReturnValue({ lang: 'en' } as I18nContext<unknown>);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

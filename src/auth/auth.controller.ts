@@ -28,12 +28,12 @@ import {
 } from '@nestjs/swagger';
 
 // Interface for request after passing through LocalAuthGuard
-interface LoginRequest extends Request {
+export interface LoginRequest extends Request {
   user: Omit<UserDocument, 'password_hash' | 'hashedRefreshToken'>; // User has been validated by LocalStrategy
 }
 
 // Interface for request after passing through JwtAuthGuard
-interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Request {
   user: {
     userId: string;
     email: string;
@@ -42,7 +42,7 @@ interface AuthenticatedRequest extends Request {
 }
 
 // Interface for request after passing through JwtRefreshTokenGuard
-interface RefreshTokenRequest extends Request {
+export interface RefreshTokenRequest extends Request {
   user: {
     userId: string;
     email: string;

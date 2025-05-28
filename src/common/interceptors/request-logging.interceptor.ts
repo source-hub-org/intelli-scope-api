@@ -42,7 +42,7 @@ export class RequestLoggingInterceptor implements NestInterceptor {
    * @param next The call handler
    * @returns The response observable
    */
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() !== 'http') {
       return next.handle();
     }
@@ -116,7 +116,7 @@ export class RequestLoggingInterceptor implements NestInterceptor {
    * @param body The body to sanitize
    * @returns Sanitized body as a string
    */
-  private sanitizeBody(body: any): string {
+  private sanitizeBody(body: unknown): string {
     if (!body) {
       return 'empty';
     }

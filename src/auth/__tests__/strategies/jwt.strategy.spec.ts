@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { JwtStrategy } from '../../strategies/jwt.strategy';
 import { UsersService } from '../../../users/users.service';
+import { UserDocument } from '../../../users';
 import {
   createMockI18nService,
   createMockConfigService,
@@ -27,7 +28,9 @@ describe('JwtStrategy', () => {
 
   beforeEach(async () => {
     // Mock I18nContext.current()
-    jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en' } as any);
+    jest
+      .spyOn(I18nContext, 'current')
+      .mockReturnValue({ lang: 'en' } as I18nContext<unknown>);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -67,7 +70,14 @@ describe('JwtStrategy', () => {
     it('should return user info when token payload is valid', async () => {
       // Arrange
       const payload = { sub: 'user-id', username: 'test@example.com' };
-      jest.spyOn(usersService, 'findById').mockResolvedValue(mockUser as any);
+      jest
+        .spyOn(usersService, 'findById')
+        .mockResolvedValue(
+          mockUser as Omit<
+            UserDocument,
+            'password_hash' | 'hashedRefreshToken'
+          >,
+        );
 
       // Act
       const result = await strategy.validate(payload);

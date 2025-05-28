@@ -8,6 +8,17 @@ import {
 } from '../../schemas/activity-log.schema';
 import { createMockModel } from '../../../common/__tests__/test-utils';
 
+// Helper function to create mock queries
+function createMockQuery(_resolvedValue: unknown): any {
+  const mockQuery = {
+    sort: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    exec: jest.fn().mockResolvedValueOnce(_resolvedValue),
+  };
+  return mockQuery;
+}
+
 describe('ActivityLogQueryService', () => {
   let service: ActivityLogQueryService;
   let activityLogModel: Model<ActivityLogDocument>;
@@ -20,6 +31,13 @@ describe('ActivityLogQueryService', () => {
       resource: 'auth',
       details: { ip: '127.0.0.1' },
       timestamp: new Date(),
+      actionType: 'LOGIN_SUCCESS',
+      actor: {
+        username: 'testuser',
+        ipAddress: '127.0.0.1',
+        userAgent: 'test-agent',
+      },
+      operationStatus: 'SUCCESS',
     },
     {
       _id: 'log-id-2',
@@ -28,8 +46,15 @@ describe('ActivityLogQueryService', () => {
       resource: 'auth',
       details: { ip: '127.0.0.1' },
       timestamp: new Date(),
+      actionType: 'LOGOUT',
+      actor: {
+        username: 'testuser',
+        ipAddress: '127.0.0.1',
+        userAgent: 'test-agent',
+      },
+      operationStatus: 'SUCCESS',
     },
-  ];
+  ] as unknown as ActivityLogDocument[];
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -61,18 +86,13 @@ describe('ActivityLogQueryService', () => {
       // Arrange
       const filter = { userId: 'user-id' };
 
-      const findSpy = jest.spyOn(activityLogModel, 'find').mockReturnValueOnce({
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValueOnce(mockActivityLogs),
-      } as any);
+      const findSpy = jest
+        .spyOn(activityLogModel, 'find')
+        .mockReturnValueOnce(createMockQuery(mockActivityLogs));
 
       const countSpy = jest
         .spyOn(activityLogModel, 'countDocuments')
-        .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValueOnce(2),
-        } as any);
+        .mockReturnValueOnce(createMockQuery(2));
 
       // Act
       const result = await service.queryLogs(filter);
@@ -96,18 +116,13 @@ describe('ActivityLogQueryService', () => {
       const filter = { userId: 'user-id' };
       const options = { page: 2, limit: 5, sort: { timestamp: -1 as -1 } };
 
-      const findSpy = jest.spyOn(activityLogModel, 'find').mockReturnValueOnce({
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValueOnce(mockActivityLogs),
-      } as any);
+      const findSpy = jest
+        .spyOn(activityLogModel, 'find')
+        .mockReturnValueOnce(createMockQuery(mockActivityLogs));
 
       const countSpy = jest
         .spyOn(activityLogModel, 'countDocuments')
-        .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValueOnce(12),
-        } as any);
+        .mockReturnValueOnce(createMockQuery(12));
 
       // Act
       const result = await service.queryLogs(filter, options);
@@ -130,18 +145,13 @@ describe('ActivityLogQueryService', () => {
       // Arrange
       const filter = { userId: 'nonexistent-id' };
 
-      const findSpy = jest.spyOn(activityLogModel, 'find').mockReturnValueOnce({
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValueOnce([]),
-      } as any);
+      const findSpy = jest
+        .spyOn(activityLogModel, 'find')
+        .mockReturnValueOnce(createMockQuery([]));
 
       const countSpy = jest
         .spyOn(activityLogModel, 'countDocuments')
-        .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValueOnce(0),
-        } as any);
+        .mockReturnValueOnce(createMockQuery(0));
 
       // Act
       const result = await service.queryLogs(filter);
