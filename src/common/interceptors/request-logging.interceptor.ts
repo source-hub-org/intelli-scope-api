@@ -69,7 +69,7 @@ export class RequestLoggingInterceptor implements NestInterceptor {
     }
 
     // Get the start time from CLS if available, or use current time
-    const startTime = this.clsService?.get('startTime') || Date.now();
+    const startTime: number = this.clsService?.get('startTime') || Date.now();
 
     return next.handle().pipe(
       tap({

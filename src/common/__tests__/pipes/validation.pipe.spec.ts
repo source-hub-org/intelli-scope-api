@@ -187,7 +187,8 @@ describe('ValidationPipe', () => {
         // Assert
         expect(error).toBeInstanceOf(BadRequestException);
         const badRequestError = error as BadRequestException;
-        const response = badRequestError.getResponse() as {
+        // Define the expected response type
+        interface ValidationErrorResponse {
           message: string;
           error: string;
           errors: Array<{
@@ -195,37 +196,48 @@ describe('ValidationPipe', () => {
             message: string;
             constraints: Record<string, string>;
           }>;
-        };
-        expect(response).toMatchObject({
-          message: 'Validation error occurred.',
-          error: 'Bad Request',
-          errors: expect.arrayContaining<
-            Array<{
-              property: string;
-              message: string;
-              constraints: Record<string, string>;
-            }>
-          >([
-            expect.objectContaining({
-              property: 'name',
-              constraints: {
-                isNotEmpty: 'name should not be empty',
-              },
-            }),
-            expect.objectContaining({
-              property: 'email',
-              constraints: {
-                isEmail: 'email must be a valid email',
-              },
-            }),
-            expect.objectContaining({
-              property: 'password',
-              constraints: {
-                minLength: 'password must be at least 6 characters',
-              },
-            }),
-          ]),
-        });
+        }
+
+        const response =
+          badRequestError.getResponse() as ValidationErrorResponse;
+        // Instead of using toMatchObject with arrayContaining, let's verify each property individually
+        expect(response.message).toBe('Validation error occurred.');
+        expect(response.error).toBe('Bad Request');
+
+        // Verify that errors array contains the expected validation errors
+        const errors = response.errors;
+        expect(errors).toBeInstanceOf(Array);
+
+        // Check for name validation error
+        expect(
+          errors.some(
+            (error) =>
+              error.property === 'name' &&
+              error.constraints &&
+              error.constraints.isNotEmpty === 'name should not be empty',
+          ),
+        ).toBe(true);
+
+        // Check for email validation error
+        expect(
+          errors.some(
+            (error) =>
+              error.property === 'email' &&
+              error.constraints &&
+              error.constraints.isEmail === 'email must be a valid email',
+          ),
+        ).toBe(true);
+
+        // Check for password validation error
+        expect(
+          errors.some(
+            (error) =>
+              error.property === 'password' &&
+              error.constraints &&
+              error.constraints.minLength ===
+                'password must be at least 6 characters',
+          ),
+        ).toBe(true);
       }
     });
   });

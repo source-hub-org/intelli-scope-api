@@ -35,7 +35,7 @@ describe('UserAuthenticationService', () => {
     jest.spyOn(I18nContext, 'current').mockReturnValue({
       lang: 'en',
       t: jest.fn().mockImplementation((key: string) => `translated:${key}`),
-      service: {} as any,
+      service: {} as Record<string, unknown>,
       id: 'test-id',
       i18n: jest.fn(),
       translate: jest.fn(),

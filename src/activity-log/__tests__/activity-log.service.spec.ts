@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Document, Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import { ActivityLogService } from '../activity-log.service';
@@ -300,9 +300,21 @@ describe('ActivityLogService', () => {
         },
       };
 
-      jest
-        .spyOn(queryService, 'queryLogs')
-        .mockResolvedValueOnce(expectedResult as any);
+      // Use a more specific type that matches what the actual service returns
+      // The Document type from mongoose adds additional properties to ActivityLog
+      type CompleteActivityLogDocument = Document<
+        unknown,
+        {},
+        ActivityLogDocument
+      > &
+        ActivityLog &
+        Document<unknown, any, any, Record<string, any>> &
+        Required<{ _id: unknown }> & { __v: number };
+
+      jest.spyOn(queryService, 'queryLogs').mockResolvedValueOnce({
+        data: expectedResult.data as CompleteActivityLogDocument[],
+        meta: expectedResult.meta,
+      });
 
       // Act
       const result = await service.queryLogs(filter, options);

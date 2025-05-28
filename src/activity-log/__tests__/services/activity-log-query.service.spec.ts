@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Query } from 'mongoose';
 import { ActivityLogQueryService } from '../../services/activity-log-query.service';
 import {
   ActivityLog,
@@ -14,14 +14,21 @@ import { createMockModel } from '../../../common/__tests__/test-utils';
  * @param resolvedValue - The value that will be resolved when exec() is called
  * @returns A mock query object with chainable methods
  */
+// We're using a more specific return type with generics to handle both find and countDocuments
 
-function createMockQuery(resolvedValue: unknown): any {
+// Helper function to create a type-safe mock query
+function createMockQuery<T, TDoc = ActivityLogDocument>(
+  resolvedValue: T,
+): Query<T, TDoc> {
+  // Using type assertion with unknown as intermediate step for safety
   return {
     sort: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     exec: jest.fn().mockResolvedValueOnce(resolvedValue),
-  };
+    // Add other necessary methods that might be called on the query
+    $where: jest.fn().mockReturnThis(),
+  } as unknown as Query<T, TDoc>;
 }
 
 describe('ActivityLogQueryService', () => {
