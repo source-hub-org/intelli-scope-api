@@ -190,7 +190,7 @@ export class ActivityLogAspect {
         logData.details['entitySnapshot'] = getEntitySnapshot(args, result);
       }
 
-      // Add input payload if applicable
+      // Add an input payload if applicable
       if (getInputPayload) {
         logData.details['inputPayloadSummary'] = getInputPayload(args);
       }

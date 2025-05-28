@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Query } from 'mongoose';
 import { InternalServerErrorException } from '@nestjs/common';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { UserAuthenticationService } from '../../services/user-authentication.service';
@@ -16,6 +16,7 @@ jest.mock('bcrypt');
 describe('UserAuthenticationService', () => {
   let service: UserAuthenticationService;
   let userModel: Model<UserDocument>;
+  // Unused variable prefixed with underscore to indicate it's intentionally unused
   let _i18nService: I18nService;
 
   const mockUser = {
@@ -26,9 +27,15 @@ describe('UserAuthenticationService', () => {
     hashedRefreshToken: 'hashed_refresh_token',
   };
 
+  // Using _MockUser with underscore prefix to indicate it's used for type checking only
+  type _MockUser = typeof mockUser;
+
   beforeEach(async () => {
     // Mock I18nContext.current()
-    jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en' } as any);
+    jest.spyOn(I18nContext, 'current').mockReturnValue({
+      lang: 'en',
+      t: jest.fn().mockImplementation((key: string) => `translated:${key}`),
+    } as any);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -60,7 +67,8 @@ describe('UserAuthenticationService', () => {
   describe('hashPassword', () => {
     it('should hash a password successfully', async () => {
       // Arrange
-      (bcrypt.hash as jest.Mock).mockResolvedValueOnce('hashed_password');
+      const hashMock = bcrypt.hash as jest.Mock;
+      hashMock.mockResolvedValueOnce('hashed_password');
 
       // Act
       const result = await service.hashPassword('password');
@@ -73,23 +81,31 @@ describe('UserAuthenticationService', () => {
 
     it('should throw InternalServerErrorException when bcrypt.hash fails', async () => {
       // Arrange
-      (bcrypt.hash as jest.Mock).mockRejectedValueOnce(
-        new Error('Bcrypt error'),
-      );
-      jest.spyOn(console, 'error').mockImplementation(() => {});
+      const hashMock = bcrypt.hash as jest.Mock;
+      hashMock.mockRejectedValueOnce(new Error('Bcrypt error'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       // Act & Assert
       await expect(service.hashPassword('password')).rejects.toThrow(
         InternalServerErrorException,
       );
-      expect(bcrypt.hash).toHaveBeenCalledWith('password', 10);
+
+      const hashSpy = jest.spyOn(bcrypt, 'hash');
+      expect(hashSpy).toHaveBeenCalledWith('password', 10);
+
+      // Clean up
+      consoleSpy.mockRestore();
     });
   });
 
   describe('comparePasswords', () => {
     it('should return true when passwords match', async () => {
       // Arrange
-      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(true);
+      const compareMock = bcrypt.compare as jest.Mock;
+      compareMock.mockResolvedValueOnce(true);
 
       // Act
       const result = await service.comparePasswords(
@@ -98,16 +114,15 @@ describe('UserAuthenticationService', () => {
       );
 
       // Assert
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        'password',
-        'hashed_password',
-      );
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
+      expect(compareSpy).toHaveBeenCalledWith('password', 'hashed_password');
       expect(result).toBe(true);
     });
 
     it('should return false when passwords do not match', async () => {
       // Arrange
-      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
+      const compareMock = bcrypt.compare as jest.Mock;
+      compareMock.mockResolvedValueOnce(false);
 
       // Act
       const result = await service.comparePasswords(
@@ -116,7 +131,8 @@ describe('UserAuthenticationService', () => {
       );
 
       // Assert
-      expect(bcrypt.compare).toHaveBeenCalledWith(
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
+      expect(compareSpy).toHaveBeenCalledWith(
         'wrong_password',
         'hashed_password',
       );
@@ -125,45 +141,52 @@ describe('UserAuthenticationService', () => {
 
     it('should throw InternalServerErrorException when bcrypt.compare fails', async () => {
       // Arrange
-      (bcrypt.compare as jest.Mock).mockRejectedValueOnce(
-        new Error('Bcrypt error'),
-      );
-      jest.spyOn(console, 'error').mockImplementation(() => {});
+      const compareMock = bcrypt.compare as jest.Mock;
+      compareMock.mockRejectedValueOnce(new Error('Bcrypt error'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       // Act & Assert
       await expect(
         service.comparePasswords('password', 'hashed_password'),
       ).rejects.toThrow(InternalServerErrorException);
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        'password',
-        'hashed_password',
-      );
+
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
+      expect(compareSpy).toHaveBeenCalledWith('password', 'hashed_password');
+
+      // Clean up
+      consoleSpy.mockRestore();
     });
   });
 
   describe('setCurrentRefreshToken', () => {
     it('should hash and store refresh token', async () => {
       // Arrange
-      (bcrypt.hash as jest.Mock).mockResolvedValueOnce('hashed_refresh_token');
-      jest
+      const hashMock = bcrypt.hash as jest.Mock;
+      hashMock.mockResolvedValueOnce('hashed_refresh_token');
+
+      const findByIdAndUpdateSpy = jest
         .spyOn(userModel, 'findByIdAndUpdate')
-        .mockResolvedValueOnce(mockUser as any);
+        .mockResolvedValueOnce(mockUser as unknown as UserDocument);
 
       // Act
       await service.setCurrentRefreshToken('user-id', 'refresh_token');
 
       // Assert
-      expect(bcrypt.hash).toHaveBeenCalledWith('refresh_token', 10);
-      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith('user-id', {
+      const hashSpy = jest.spyOn(bcrypt, 'hash');
+      expect(hashSpy).toHaveBeenCalledWith('refresh_token', 10);
+      expect(findByIdAndUpdateSpy).toHaveBeenCalledWith('user-id', {
         hashedRefreshToken: 'hashed_refresh_token',
       });
     });
 
     it('should clear refresh token when null is provided', async () => {
       // Arrange
-      jest
+      const findByIdAndUpdateSpy = jest
         .spyOn(userModel, 'findByIdAndUpdate')
-        .mockResolvedValueOnce(mockUser as any);
+        .mockResolvedValueOnce(mockUser as unknown as UserDocument);
 
       // Act
       await service.setCurrentRefreshToken('user-id', null);
@@ -171,7 +194,6 @@ describe('UserAuthenticationService', () => {
       // Assert
       const hashSpy = jest.spyOn(bcrypt, 'hash');
       expect(hashSpy).not.toHaveBeenCalled();
-      const findByIdAndUpdateSpy = jest.spyOn(userModel, 'findByIdAndUpdate');
       expect(findByIdAndUpdateSpy).toHaveBeenCalledWith('user-id', {
         hashedRefreshToken: null,
       });
@@ -179,29 +201,46 @@ describe('UserAuthenticationService', () => {
 
     it('should throw InternalServerErrorException when bcrypt.hash fails', async () => {
       // Arrange
-      (bcrypt.hash as jest.Mock).mockRejectedValueOnce(
-        new Error('Bcrypt error'),
-      );
-      jest.spyOn(console, 'error').mockImplementation(() => {});
+      const hashMock = bcrypt.hash as jest.Mock;
+      hashMock.mockRejectedValueOnce(new Error('Bcrypt error'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      const findByIdAndUpdateSpy = jest.spyOn(userModel, 'findByIdAndUpdate');
 
       // Act & Assert
       await expect(
         service.setCurrentRefreshToken('user-id', 'refresh_token'),
       ).rejects.toThrow(InternalServerErrorException);
+
       const hashSpy = jest.spyOn(bcrypt, 'hash');
       expect(hashSpy).toHaveBeenCalledWith('refresh_token', 10);
-      const findByIdAndUpdateSpy = jest.spyOn(userModel, 'findByIdAndUpdate');
       expect(findByIdAndUpdateSpy).not.toHaveBeenCalled();
+
+      // Clean up
+      consoleSpy.mockRestore();
     });
   });
 
   describe('validateRefreshToken', () => {
     it('should return true when refresh token is valid', async () => {
       // Arrange
-      jest.spyOn(userModel, 'findById').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(mockUser),
-      } as any);
-      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(true);
+      // Create a properly typed mock query
+      const mockExecFn = jest.fn().mockResolvedValueOnce(mockUser);
+      const mockQuery = { exec: mockExecFn } as unknown as Query<
+        unknown,
+        unknown,
+        {},
+        UserDocument
+      >;
+
+      const findByIdSpy = jest
+        .spyOn(userModel, 'findById')
+        .mockReturnValueOnce(mockQuery);
+
+      const compareMock = bcrypt.compare as jest.Mock;
+      compareMock.mockResolvedValueOnce(true);
 
       // Act
       const result = await service.validateRefreshToken(
@@ -210,8 +249,10 @@ describe('UserAuthenticationService', () => {
       );
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith('user-id');
-      expect(bcrypt.compare).toHaveBeenCalledWith(
+      expect(findByIdSpy).toHaveBeenCalledWith('user-id');
+
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
+      expect(compareSpy).toHaveBeenCalledWith(
         'refresh_token',
         'hashed_refresh_token',
       );
@@ -220,9 +261,20 @@ describe('UserAuthenticationService', () => {
 
     it('should return false when user is not found', async () => {
       // Arrange
-      jest.spyOn(userModel, 'findById').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(null),
-      } as any);
+      // Create a properly typed mock query
+      const mockExecFn = jest.fn().mockResolvedValueOnce(null);
+      const mockQuery = { exec: mockExecFn } as unknown as Query<
+        unknown,
+        unknown,
+        {},
+        UserDocument
+      >;
+
+      const findByIdSpy = jest
+        .spyOn(userModel, 'findById')
+        .mockReturnValueOnce(mockQuery);
+
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
 
       // Act
       const result = await service.validateRefreshToken(
@@ -231,17 +283,31 @@ describe('UserAuthenticationService', () => {
       );
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith('nonexistent-id');
-      expect(bcrypt.compare).not.toHaveBeenCalled();
+      expect(findByIdSpy).toHaveBeenCalledWith('nonexistent-id');
+      expect(compareSpy).not.toHaveBeenCalled();
       expect(result).toBe(false);
     });
 
     it('should return false when user has no stored refresh token', async () => {
       // Arrange
       const userWithoutRefreshToken = { ...mockUser, hashedRefreshToken: null };
-      jest.spyOn(userModel, 'findById').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(userWithoutRefreshToken),
-      } as any);
+
+      // Create a properly typed mock query
+      const mockExecFn = jest
+        .fn()
+        .mockResolvedValueOnce(userWithoutRefreshToken);
+      const mockQuery = { exec: mockExecFn } as unknown as Query<
+        unknown,
+        unknown,
+        {},
+        UserDocument
+      >;
+
+      const findByIdSpy = jest
+        .spyOn(userModel, 'findById')
+        .mockReturnValueOnce(mockQuery);
+
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
 
       // Act
       const result = await service.validateRefreshToken(
@@ -250,17 +316,28 @@ describe('UserAuthenticationService', () => {
       );
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith('user-id');
-      expect(bcrypt.compare).not.toHaveBeenCalled();
+      expect(findByIdSpy).toHaveBeenCalledWith('user-id');
+      expect(compareSpy).not.toHaveBeenCalled();
       expect(result).toBe(false);
     });
 
     it('should return false when refresh token does not match', async () => {
       // Arrange
-      jest.spyOn(userModel, 'findById').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(mockUser),
-      } as any);
-      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
+      // Create a properly typed mock query
+      const mockExecFn = jest.fn().mockResolvedValueOnce(mockUser);
+      const mockQuery = { exec: mockExecFn } as unknown as Query<
+        unknown,
+        unknown,
+        {},
+        UserDocument
+      >;
+
+      const findByIdSpy = jest
+        .spyOn(userModel, 'findById')
+        .mockReturnValueOnce(mockQuery);
+
+      const compareMock = bcrypt.compare as jest.Mock;
+      compareMock.mockResolvedValueOnce(false);
 
       // Act
       const result = await service.validateRefreshToken(
@@ -269,8 +346,10 @@ describe('UserAuthenticationService', () => {
       );
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith('user-id');
-      expect(bcrypt.compare).toHaveBeenCalledWith(
+      expect(findByIdSpy).toHaveBeenCalledWith('user-id');
+
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
+      expect(compareSpy).toHaveBeenCalledWith(
         'invalid_refresh_token',
         'hashed_refresh_token',
       );
@@ -279,13 +358,25 @@ describe('UserAuthenticationService', () => {
 
     it('should return false when bcrypt.compare fails', async () => {
       // Arrange
-      jest.spyOn(userModel, 'findById').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(mockUser),
-      } as any);
-      (bcrypt.compare as jest.Mock).mockRejectedValueOnce(
-        new Error('Bcrypt error'),
-      );
-      jest.spyOn(console, 'error').mockImplementation(() => {});
+      // Create a properly typed mock query
+      const mockExecFn = jest.fn().mockResolvedValueOnce(mockUser);
+      const mockQuery = { exec: mockExecFn } as unknown as Query<
+        unknown,
+        unknown,
+        {},
+        UserDocument
+      >;
+
+      const findByIdSpy = jest
+        .spyOn(userModel, 'findById')
+        .mockReturnValueOnce(mockQuery);
+
+      const compareMock = bcrypt.compare as jest.Mock;
+      compareMock.mockRejectedValueOnce(new Error('Bcrypt error'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       // Act
       const result = await service.validateRefreshToken(
@@ -294,12 +385,17 @@ describe('UserAuthenticationService', () => {
       );
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith('user-id');
-      expect(bcrypt.compare).toHaveBeenCalledWith(
+      expect(findByIdSpy).toHaveBeenCalledWith('user-id');
+
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
+      expect(compareSpy).toHaveBeenCalledWith(
         'refresh_token',
         'hashed_refresh_token',
       );
       expect(result).toBe(false);
+
+      // Clean up
+      consoleSpy.mockRestore();
     });
   });
 });
