@@ -1826,3 +1826,11 @@
 .swagger-ui .opblock-body pre.microlight {
   font-weight: 400;
 }
+
+#auth-bearer-value {
+  width: 100%;
+}
+
+.auth-btn-wrapper button {
+  margin: 0 10px;
+}
