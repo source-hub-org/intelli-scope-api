@@ -469,36 +469,10 @@
     "title": "IntelliScope API",
     "description": "API documentation for IntelliScope",
     "version": "1.0",
-    "contact": {
-      "name": "IntelliScope Team",
-      "url": "https://openwp.org",
-      "email": "tranthethang@gmail.com"
-    },
-    "license": {
-      "name": "MIT",
-      "url": "https://opensource.org/licenses/MIT"
-    }
+    "contact": {}
   },
-  "tags": [
-    {
-      "name": "App",
-      "description": "Application endpoints"
-    },
-    {
-      "name": "Authentication",
-      "description": "Authentication related endpoints"
-    },
-    {
-      "name": "Users",
-      "description": "User management endpoints"
-    }
-  ],
-  "servers": [
-    {
-      "url": "http://127.0.0.1:3000",
-      "description": "Local Development Server"
-    }
-  ],
+  "tags": [],
+  "servers": [],
   "components": {
     "securitySchemes": {
       "bearer": {
@@ -669,9 +643,5 @@
         }
       }
     }
-  },
-  "externalDocs": {
-    "description": "Additional Documentation",
-    "url": "https://github.com/source-hub-org/intelli-scope-api"
   }
 }

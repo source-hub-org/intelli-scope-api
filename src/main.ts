@@ -70,8 +70,16 @@ async function bootstrap() {
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);
 
+    const customCss = fs.readFileSync(
+      path.join(__dirname, '..', 'theme-newspaper.css'),
+      'utf8',
+    );
+
     // Setup Swagger UI
-    SwaggerModule.setup('docs', app, document);
+    SwaggerModule.setup('docs', app, document, {
+      customCss,
+      customSiteTitle: 'IntelliScope API Documentation',
+    });
 
     // Generate OpenAPI JSON file
     generateOpenApiJson(app, document);
