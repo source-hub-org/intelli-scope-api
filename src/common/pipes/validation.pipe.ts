@@ -31,6 +31,28 @@ export class ValidationPipe implements PipeTransform<any> {
       return value as T;
     }
 
+    // Skip validation for I18nContext objects
+    if (
+      value &&
+      typeof value === 'object' &&
+      value !== null &&
+      // Use type assertion to avoid TypeScript warnings
+      (value as Record<string, unknown>).constructor &&
+      // Use type assertion to access constructor name safely
+      (
+        (value as Record<string, unknown>).constructor as unknown as {
+          name: string;
+        }
+      ).name === 'I18nContext'
+    ) {
+      return value as T;
+    }
+
+    // Skip validation for undefined or null values
+    if (value === undefined || value === null) {
+      return value as T;
+    }
+
     // Convert plain object to class instance
     try {
       const valueAsRecord =
