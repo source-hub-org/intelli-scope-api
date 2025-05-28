@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="./assets/intelli-scope-api.png" alt="IntelliScope API Screenshot" width="830"/>
+</div>
+
 # IntelliScope API
 
 A modern, secure, and scalable RESTful API built with NestJS, MongoDB, and TypeScript that provides AI-powered project analysis, feature generation, and smart estimation for streamlined development.
