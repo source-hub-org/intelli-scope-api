@@ -42,13 +42,14 @@ export class ValidationPipe implements PipeTransform<any> {
       let object: object;
       try {
         // Create a new instance of the class
-        const instance = new (metatype as any)();
+        const instance = new (metatype as new () => object)();
         // Manually copy properties instead of using plainToInstance
         object = Object.assign(instance, valueAsRecord);
-      } catch (error) {
+      } catch (error: unknown) {
+        const err = error as Error;
         this.logger.error(
-          `Error creating object instance: ${error.message}`,
-          error.stack,
+          `Error creating object instance: ${err.message}`,
+          err.stack,
         );
         // If we can't create an instance, just return the original value
         return value as T;
@@ -102,15 +103,16 @@ export class ValidationPipe implements PipeTransform<any> {
       }
 
       return object as T;
-    } catch (error) {
+    } catch (error: unknown) {
       // If the error is a BadRequestException, rethrow it
       if (error instanceof BadRequestException) {
         throw error;
       }
 
+      const err = error as Error;
       this.logger.error(
-        `Unexpected error in validation pipe: ${error.message}`,
-        error.stack,
+        `Unexpected error in validation pipe: ${err.message}`,
+        err.stack,
       );
       return value as T;
     }

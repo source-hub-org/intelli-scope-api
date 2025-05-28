@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ArgumentMetadata, BadRequestException } from '@nestjs/common';
-import { I18nService, I18nContext } from 'nestjs-i18n';
+import { I18nService } from 'nestjs-i18n';
 import { ValidationPipe } from '../../pipes/validation.pipe';
 import { createMockI18nService } from '../test-utils';
 import { IsString, IsEmail, IsNotEmpty, MinLength } from 'class-validator';
@@ -24,8 +24,7 @@ describe('ValidationPipe', () => {
   let i18nService: I18nService;
 
   beforeEach(async () => {
-    // Mock I18nContext.current()
-    jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en' } as any);
+    // Skip mocking I18nContext.current() as it's not directly used in the validation pipe
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -173,7 +172,9 @@ describe('ValidationPipe', () => {
       // Mock the validate function
       jest
         .spyOn(classValidator, 'validate')
-        .mockResolvedValueOnce(errors as any);
+        .mockResolvedValueOnce(
+          errors as unknown as classValidator.ValidationError[],
+        );
       jest
         .spyOn(i18nService, 't')
         .mockReturnValueOnce('Validation error occurred.');
@@ -185,10 +186,26 @@ describe('ValidationPipe', () => {
       } catch (error) {
         // Assert
         expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.response).toMatchObject({
+        const badRequestError = error as BadRequestException;
+        const response = badRequestError.getResponse() as {
+          message: string;
+          error: string;
+          errors: Array<{
+            property: string;
+            message: string;
+            constraints: Record<string, string>;
+          }>;
+        };
+        expect(response).toMatchObject({
           message: 'Validation error occurred.',
           error: 'Bad Request',
-          errors: expect.arrayContaining([
+          errors: expect.arrayContaining<
+            Array<{
+              property: string;
+              message: string;
+              constraints: Record<string, string>;
+            }>
+          >([
             expect.objectContaining({
               property: 'name',
               constraints: {
