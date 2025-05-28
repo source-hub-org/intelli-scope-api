@@ -34,10 +34,16 @@ describe('LogActivity Decorator', () => {
       @LogActivity({
         actionType: 'create',
         resourceType: 'test',
-        getResourceId: (args) => args[0],
+        getResourceId: (args: unknown[]): string => String(args[0]),
       })
-      async createTest(userId: string, data: any): Promise<any> {
-        return { id: 'test-id', ...data };
+      async createTest(
+        userId: string,
+        data: Record<string, unknown>,
+      ): Promise<Record<string, unknown>> {
+        // Using await to satisfy require-await rule
+        await Promise.resolve();
+        const result: Record<string, unknown> = { id: 'test-id', ...data };
+        return result;
       }
     }
 
@@ -46,15 +52,19 @@ describe('LogActivity Decorator', () => {
     const testData = { name: 'Test' };
 
     // Act
-    const result = await testService.createTest(userId, testData);
+    const result: Record<string, unknown> = await testService.createTest(
+      userId,
+      testData,
+    );
 
     // Assert
     expect(result).toEqual({ id: 'test-id', name: 'Test' });
-    expect(activityLogService.logActivity).toHaveBeenCalledWith({
+    const logActivitySpy = jest.spyOn(activityLogService, 'logActivity');
+    expect(logActivitySpy).toHaveBeenCalledWith({
       userId,
       action: 'create',
       resource: 'test',
-      details: expect.objectContaining({
+      details: expect.objectContaining<Record<string, unknown>>({
         args: [userId, testData],
         result: { id: 'test-id', name: 'Test' },
       }),
@@ -63,11 +73,17 @@ describe('LogActivity Decorator', () => {
 
   it('should log activity with custom details function', async () => {
     // Arrange
-    const detailsFunction = (args: any[], result: any) => ({
-      customField: 'custom value',
-      inputName: args[1].name,
-      outputId: result.id,
-    });
+    const detailsFunction = (
+      args: unknown[],
+      result: Record<string, unknown>,
+    ) => {
+      const data = args[1] as Record<string, unknown>;
+      return {
+        customField: 'custom value',
+        inputName: data.name as string,
+        outputId: result.id as string,
+      };
+    };
 
     class TestService {
       constructor(private readonly activityLogService: ActivityLogService) {}
@@ -75,11 +91,21 @@ describe('LogActivity Decorator', () => {
       @LogActivity({
         actionType: 'update',
         resourceType: 'test',
-        getResourceId: (args) => args[0],
+        getResourceId: (args: unknown[]): string => String(args[0]),
         getEntitySnapshot: detailsFunction,
       })
-      async updateTest(userId: string, data: any): Promise<any> {
-        return { id: 'test-id', ...data, updated: true };
+      async updateTest(
+        userId: string,
+        data: Record<string, unknown>,
+      ): Promise<Record<string, unknown>> {
+        // Using await to satisfy require-await rule
+        await Promise.resolve();
+        const result: Record<string, unknown> = {
+          id: 'test-id',
+          ...data,
+          updated: true,
+        };
+        return result;
       }
     }
 
@@ -88,7 +114,10 @@ describe('LogActivity Decorator', () => {
     const testData = { name: 'Updated Test' };
 
     // Act
-    const result = await testService.updateTest(userId, testData);
+    const result: Record<string, unknown> = await testService.updateTest(
+      userId,
+      testData,
+    );
 
     // Assert
     expect(result).toEqual({
@@ -96,11 +125,12 @@ describe('LogActivity Decorator', () => {
       name: 'Updated Test',
       updated: true,
     });
-    expect(activityLogService.logActivity).toHaveBeenCalledWith({
+    const logActivitySpy = jest.spyOn(activityLogService, 'logActivity');
+    expect(logActivitySpy).toHaveBeenCalledWith({
       userId,
       action: 'update',
       resource: 'test',
-      details: expect.objectContaining({
+      details: expect.objectContaining<Record<string, unknown>>({
         entitySnapshot: {
           customField: 'custom value',
           inputName: 'Updated Test',
@@ -118,9 +148,11 @@ describe('LogActivity Decorator', () => {
       @LogActivity({
         actionType: 'delete',
         resourceType: 'test',
-        getResourceId: (args) => args[0],
+        getResourceId: (args: unknown[]): string => String(args[0]),
       })
-      async deleteTest(userId: string, id: string): Promise<void> {
+      async deleteTest(_userId: string, _id: string): Promise<void> {
+        // Using await to satisfy require-await rule
+        await Promise.resolve();
         throw new Error('Delete failed');
       }
     }
@@ -133,13 +165,14 @@ describe('LogActivity Decorator', () => {
     await expect(testService.deleteTest(userId, testId)).rejects.toThrow(
       'Delete failed',
     );
-    expect(activityLogService.logActivity).toHaveBeenCalledWith({
+    const logActivitySpy = jest.spyOn(activityLogService, 'logActivity');
+    expect(logActivitySpy).toHaveBeenCalledWith({
       userId,
       action: 'delete',
       resource: 'test',
-      details: expect.objectContaining({
+      details: expect.objectContaining<Record<string, unknown>>({
         args: [userId, testId],
-        error: expect.stringContaining('Delete failed'),
+        error: expect.stringContaining('Delete failed') as unknown,
       }),
     });
   });
@@ -152,10 +185,15 @@ describe('LogActivity Decorator', () => {
       @LogActivity({
         actionType: 'view',
         resourceType: 'test',
-        getResourceId: (args) => undefined, // This will cause no logging
+        getResourceId: (_args: unknown[]): undefined => undefined, // This will cause no logging
       })
-      async viewTest(data: any): Promise<any> {
-        return { ...data, viewed: true };
+      async viewTest(
+        data: Record<string, unknown>,
+      ): Promise<Record<string, unknown>> {
+        // Using await to satisfy require-await rule
+        await Promise.resolve();
+        const result: Record<string, unknown> = { ...data, viewed: true };
+        return result;
       }
     }
 
@@ -163,10 +201,12 @@ describe('LogActivity Decorator', () => {
     const testData = { name: 'Test' };
 
     // Act
-    const result = await testService.viewTest(testData);
+    const result: Record<string, unknown> =
+      await testService.viewTest(testData);
 
     // Assert
     expect(result).toEqual({ name: 'Test', viewed: true });
-    expect(activityLogService.logActivity).not.toHaveBeenCalled();
+    const logActivitySpy = jest.spyOn(activityLogService, 'logActivity');
+    expect(logActivitySpy).not.toHaveBeenCalled();
   });
 });

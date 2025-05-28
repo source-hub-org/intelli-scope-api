@@ -1,0 +1,112 @@
+{
+  "errors": [
+    {
+      "type": "@typescript-eslint/no-unused-vars",
+      "description": "Variables defined but never used",
+      "example": "const createMockModel = jest.fn();",
+      "fix": "Remove unused variables or prefix them with underscore (_) to indicate they are intentionally unused. For function parameters, you can also use the underscore prefix: function example(_unusedParam) {}"
+    },
+    {
+      "type": "@typescript-eslint/no-unsafe-return",
+      "description": "Unsafe return of a value of type `any`",
+      "example": "return mockModel.findOne();",
+      "fix": "Add proper type annotations or type assertions to ensure type safety. For example: return mockModel.findOne() as SomeType; or use unknown and then type assertion: return mockModel.findOne() as unknown as SomeType;"
+    },
+    {
+      "type": "@typescript-eslint/no-unsafe-argument",
+      "description": "Unsafe argument of type `any` assigned to a parameter of typed function",
+      "example": "service.create(mockData);",
+      "fix": "Add proper type assertions or type the variables correctly before passing them as arguments. For example: service.create(mockData as CreateDto); or service.create(mockData as Partial<Entity> & { requiredField: string });"
+    },
+    {
+      "type": "@typescript-eslint/no-unsafe-assignment",
+      "description": "Unsafe assignment of an `any` value",
+      "example": "const result = await service.findOne();",
+      "fix": "Add proper type annotations or type annotations to ensure type safety. For example: const result = await service.findOne() as Entity; or const result: Entity = await service.findOne() as Entity;"
+    },
+    {
+      "type": "@typescript-eslint/unbound-method",
+      "description": "Avoid referencing unbound methods which may cause unintentional scoping of `this`",
+      "example": "expect(mockModel.findOne).toHaveBeenCalledWith({ _id: id });",
+      "fix": "Store the spy in a variable and use that in the expect statement. For example: const findOneSpy = jest.spyOn(mockModel, 'findOne'); expect(findOneSpy).toHaveBeenCalledWith({ _id: id });"
+    },
+    {
+      "type": "@typescript-eslint/no-unsafe-member-access",
+      "description": "Unsafe member access on an `any` value",
+      "example": "const name = result.name;",
+      "fix": "Add proper type assertions before accessing properties. For example: const name = (result as Record<string, unknown>).name as string; or const typedResult = result as { name: string }; const name = typedResult.name;"
+    },
+    {
+      "type": "@typescript-eslint/require-await",
+      "description": "Async method has no 'await' expression",
+      "example": "async createTest() { return this.service.create(data); }",
+      "fix": "Either use await in the function or remove the async keyword if not needed. For example: async createTest() { await Promise.resolve(); return this.service.create(data); } or createTest() { return this.service.create(data); }"
+    },
+    {
+      "type": "@typescript-eslint/no-unsafe-call",
+      "description": "Unsafe call of an `any` value",
+      "example": "const result = someFunction();",
+      "fix": "Add proper type assertions before calling the function. For example: const result = (someFunction as () => ReturnType)();"
+    },
+    {
+      "type": "expect.objectContaining",
+      "description": "Using expect.objectContaining without proper typing",
+      "example": "expect(result).toEqual(expect.objectContaining({ id: 'test-id' }));",
+      "fix": "Add type parameter to expect.objectContaining. For example: expect(result).toEqual(expect.objectContaining<Record<string, unknown>>({ id: 'test-id' }));"
+    },
+    {
+      "type": "decorator-function-typing",
+      "description": "Decorator functions with untyped parameters",
+      "example": "@LogActivity({ getResourceId: (args) => args[0] })",
+      "fix": "Add proper type annotations to decorator function parameters and return type. For example: @LogActivity({ getResourceId: (args: unknown[]): string => String(args[0]) })"
+    },
+    {
+      "type": "mock-implementation-async",
+      "description": "Mock implementation without await in async function",
+      "example": "jest.fn().mockImplementation(() => { throw error; })",
+      "fix": "Add async/await to mock implementations that throw errors or return promises. For example: jest.fn().mockImplementation(async () => { throw error; })"
+    },
+    {
+      "type": "spy-instance-typing",
+      "description": "Untyped spy instance mock calls",
+      "example": "const callArg = spy.mock.calls[0][0];",
+      "fix": "Store the spy in a variable with proper typing and then access its mock calls. For example: const mySpy = jest.spyOn(service, 'method'); const callArg = mySpy.mock.calls[0][0] as ExpectedType;"
+    },
+    {
+      "type": "mock-config-service",
+      "description": "Mocking ConfigService with untyped return values",
+      "example": "get: jest.fn((key) => { if (key === 'SOME_KEY') return 'value'; })",
+      "fix": "Add explicit return types to the mock implementation. For example: get: jest.fn((key: string, defaultValue?: unknown) => { if (key === 'SOME_KEY') return 'value' as string; return defaultValue as string; })"
+    },
+    {
+      "type": "string-conversion",
+      "description": "Using type assertions for string conversion",
+      "example": "return args[0] as string;",
+      "fix": "Use String() constructor for explicit conversion instead of type assertions. For example: return String(args[0]);"
+    },
+    {
+      "type": "@typescript-eslint/no-floating-promises",
+      "description": "Promises must be handled appropriately or explicitly marked as ignored with the void operator",
+      "example": "someAsyncFunction();",
+      "fix": "Either await the promise, chain with .then()/.catch(), or use the void operator to explicitly mark it as ignored. For example: await someAsyncFunction(); or void someAsyncFunction(); or someAsyncFunction().catch(error => console.error(error));"
+    },
+    {
+      "type": "jest-mock-calls-typing",
+      "description": "Unsafe access to mock.calls without proper typing",
+      "example": "const logCalls = (Logger.prototype.log as jest.Mock).mock.calls;",
+      "fix": "Store the spy in a variable and access its mock calls directly. For example: const logSpy = jest.spyOn(Logger.prototype, 'log'); const logCalls = logSpy.mock.calls;"
+    },
+    {
+      "type": "jest-mock-string-comparison",
+      "description": "Unsafe string comparison in mock call assertions",
+      "example": "expect(logCalls.some((call) => call[0].includes('message')));",
+      "fix": "Use String() to ensure safe string conversion before using string methods. For example: expect(logCalls.some((call) => { const message = String(call[0]); return message.includes('message'); }));"
+    },
+    {
+      "type": "async-iife-error-handling",
+      "description": "Async IIFE without proper error handling in tests",
+      "example": "(async () => { /* test code */ })();",
+      "fix": "Add proper error handling and use void operator to mark as intentionally ignored. For example: void (async () => { try { /* test code */ } catch (error) { done(error instanceof Error ? error : new Error(String(error))); } })();"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ import { createMockI18nService } from '../../../common/__tests__/test-utils';
 describe('LocalStrategy', () => {
   let strategy: LocalStrategy;
   let authService: AuthService;
-  let i18nService: I18nService;
+  let _i18nService: I18nService;
 
   const mockUser = {
     _id: 'user-id',
@@ -40,7 +40,7 @@ describe('LocalStrategy', () => {
 
     strategy = module.get<LocalStrategy>(LocalStrategy);
     authService = module.get<AuthService>(AuthService);
-    i18nService = module.get<I18nService>(I18nService);
+    _i18nService = module.get<I18nService>(I18nService);
   });
 
   afterEach(() => {

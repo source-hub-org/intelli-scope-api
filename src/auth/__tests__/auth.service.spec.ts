@@ -10,8 +10,9 @@ import { AuthService } from '../auth.service';
 import { UsersService } from '../../users/users.service';
 import { UserAuthenticationService } from '../../users/services/user-authentication.service';
 import { TokenService } from '../services/token.service';
+import { UserDocument } from '../../users/schemas/user.schema';
 import {
-  createMockDocument,
+  // Import the correct function name
   createMockI18nService,
   createMockConfigService,
 } from '../../common/__tests__/test-utils';
@@ -21,16 +22,23 @@ describe('AuthService', () => {
   let usersService: UsersService;
   let userAuthService: UserAuthenticationService;
   let tokenService: TokenService;
-  let i18nService: I18nService;
+  let _i18nService: I18nService; // Prefixed with underscore to indicate intentionally unused
   let configService: ConfigService;
 
-  const mockUser = createMockDocument({
+  const mockUser = {
     _id: 'user-id',
     email: 'test@example.com',
     name: 'Test User',
     password_hash: 'hashed_password',
     hashedRefreshToken: 'hashed_refresh_token',
-  });
+    toObject: jest.fn().mockReturnValue({
+      _id: 'user-id',
+      email: 'test@example.com',
+      name: 'Test User',
+      password_hash: 'hashed_password',
+      hashedRefreshToken: 'hashed_refresh_token',
+    }),
+  } as unknown as UserDocument;
 
   const mockUserWithoutSensitiveFields = {
     _id: 'user-id',
@@ -58,7 +66,13 @@ describe('AuthService', () => {
     };
 
     // Mock I18nContext.current()
-    jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en' } as any);
+    jest.spyOn(I18nContext, 'current').mockReturnValue({
+      lang: 'en',
+      t: jest.fn().mockImplementation((key: string) => `translated:${key}`),
+      service: {
+        hbsHelper: jest.fn().mockReturnValue(''),
+      },
+    } as unknown as I18nContext<unknown>);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -94,7 +108,7 @@ describe('AuthService', () => {
       UserAuthenticationService,
     );
     tokenService = module.get<TokenService>(TokenService);
-    i18nService = module.get<I18nService>(I18nService);
+    _i18nService = module.get<I18nService>(I18nService);
     configService = module.get<ConfigService>(ConfigService);
   });
 
@@ -116,10 +130,13 @@ describe('AuthService', () => {
       const result = await service.validateUser('test@example.com', 'password');
 
       // Assert
-      expect(usersService.findOneByEmail).toHaveBeenCalledWith(
-        'test@example.com',
+      const findOneByEmailSpy = jest.spyOn(usersService, 'findOneByEmail');
+      expect(findOneByEmailSpy).toHaveBeenCalledWith('test@example.com');
+      const comparePasswordsSpy = jest.spyOn(
+        userAuthService,
+        'comparePasswords',
       );
-      expect(userAuthService.comparePasswords).toHaveBeenCalledWith(
+      expect(comparePasswordsSpy).toHaveBeenCalledWith(
         'password',
         'hashed_password',
       );
@@ -142,9 +159,8 @@ describe('AuthService', () => {
       await expect(
         service.validateUser('nonexistent@example.com', 'password'),
       ).rejects.toThrow(UnauthorizedException);
-      expect(usersService.findOneByEmail).toHaveBeenCalledWith(
-        'nonexistent@example.com',
-      );
+      const findOneByEmailSpy = jest.spyOn(usersService, 'findOneByEmail');
+      expect(findOneByEmailSpy).toHaveBeenCalledWith('nonexistent@example.com');
     });
 
     it('should throw UnauthorizedException when password does not match', async () => {
@@ -156,10 +172,13 @@ describe('AuthService', () => {
       await expect(
         service.validateUser('test@example.com', 'wrong_password'),
       ).rejects.toThrow(UnauthorizedException);
-      expect(usersService.findOneByEmail).toHaveBeenCalledWith(
-        'test@example.com',
+      const findOneByEmailSpy = jest.spyOn(usersService, 'findOneByEmail');
+      expect(findOneByEmailSpy).toHaveBeenCalledWith('test@example.com');
+      const comparePasswordsSpy = jest.spyOn(
+        userAuthService,
+        'comparePasswords',
       );
-      expect(userAuthService.comparePasswords).toHaveBeenCalledWith(
+      expect(comparePasswordsSpy).toHaveBeenCalledWith(
         'wrong_password',
         'hashed_password',
       );
@@ -167,8 +186,14 @@ describe('AuthService', () => {
 
     it('should throw Error when user object does not have toObject method', async () => {
       // Arrange
-      const userWithoutToObject = { ...mockUser };
-      delete userWithoutToObject.toObject;
+      const userWithoutToObject = {
+        _id: 'user-id',
+        email: 'test@example.com',
+        name: 'Test User',
+        password_hash: 'hashed_password',
+        hashedRefreshToken: 'hashed_refresh_token',
+      } as unknown as UserDocument;
+
       jest
         .spyOn(usersService, 'findOneByEmail')
         .mockResolvedValue(userWithoutToObject);
@@ -198,9 +223,21 @@ describe('AuthService', () => {
       const result = await service.getTokens('user-id', 'test@example.com');
 
       // Assert
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith('user-id');
-      expect(tokenService.generateAccessToken).toHaveBeenCalledWith(mockUser);
-      expect(tokenService.generateRefreshToken).toHaveBeenCalledWith(mockUser);
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
+      );
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('user-id');
+      const generateAccessTokenSpy = jest.spyOn(
+        tokenService,
+        'generateAccessToken',
+      );
+      expect(generateAccessTokenSpy).toHaveBeenCalledWith(mockUser);
+      const generateRefreshTokenSpy = jest.spyOn(
+        tokenService,
+        'generateRefreshToken',
+      );
+      expect(generateRefreshTokenSpy).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual({
         access_token: 'access_token',
         refresh_token: 'refresh_token',
@@ -216,9 +253,11 @@ describe('AuthService', () => {
       await expect(
         service.getTokens('nonexistent-id', 'test@example.com'),
       ).rejects.toThrow(UnauthorizedException);
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith(
-        'nonexistent-id',
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
       );
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('nonexistent-id');
     });
 
     it('should throw InternalServerErrorException when access token expiration is invalid', async () => {
@@ -243,19 +282,39 @@ describe('AuthService', () => {
       jest.spyOn(usersService, 'setCurrentRefreshToken').mockResolvedValue();
 
       // Act
-      const result = await service.login(mockUserWithoutSensitiveFields as any);
+      // Create a properly typed user object for the login method
+      const userForLogin = {
+        ...mockUserWithoutSensitiveFields,
+      } as Omit<UserDocument, 'password_hash' | 'hashedRefreshToken'>;
+      const result = await service.login(userForLogin);
 
       // Assert
-      expect(service.getTokens).toHaveBeenCalledWith(
-        'user-id',
-        'test@example.com',
+      const getTokensSpy = jest.spyOn(service, 'getTokens');
+      expect(getTokensSpy).toHaveBeenCalledWith('user-id', 'test@example.com');
+      const setCurrentRefreshTokenSpy = jest.spyOn(
+        usersService,
+        'setCurrentRefreshToken',
       );
-      expect(usersService.setCurrentRefreshToken).toHaveBeenCalledWith(
+      expect(setCurrentRefreshTokenSpy).toHaveBeenCalledWith(
         'user-id',
         'refresh_token',
       );
-      expect(result).toEqual({
-        message: expect.any(String),
+      // Use a type for the expected result to avoid unsafe assignment
+      type LoginResponse = {
+        message: string;
+        user: {
+          id: string;
+          email: string;
+          name: string;
+        };
+        access_token: string;
+        refresh_token: string;
+        expires_in: number;
+      };
+
+      // Using a string literal for message to avoid unsafe assignment
+      const expectedResponse: LoginResponse = {
+        message: 'translated:translation.AUTH.LOGIN_SUCCESS', // Match the translated message
         user: {
           id: 'user-id',
           email: 'test@example.com',
@@ -264,7 +323,9 @@ describe('AuthService', () => {
         access_token: 'access_token',
         refresh_token: 'refresh_token',
         expires_in: 3600,
-      });
+      };
+
+      expect(result).toEqual(expectedResponse);
     });
   });
 
@@ -288,25 +349,46 @@ describe('AuthService', () => {
       const result = await service.refreshToken('user-id', 'refresh_token');
 
       // Assert
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith('user-id');
-      expect(userAuthService.validateRefreshToken).toHaveBeenCalledWith(
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
+      );
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('user-id');
+      const validateRefreshTokenSpy = jest.spyOn(
+        userAuthService,
+        'validateRefreshToken',
+      );
+      expect(validateRefreshTokenSpy).toHaveBeenCalledWith(
         'refresh_token',
         'user-id',
       );
-      expect(service.getTokens).toHaveBeenCalledWith(
-        'user-id',
-        'test@example.com',
+      const getTokensSpy = jest.spyOn(service, 'getTokens');
+      expect(getTokensSpy).toHaveBeenCalledWith('user-id', 'test@example.com');
+      const setCurrentRefreshTokenSpy = jest.spyOn(
+        usersService,
+        'setCurrentRefreshToken',
       );
-      expect(usersService.setCurrentRefreshToken).toHaveBeenCalledWith(
+      expect(setCurrentRefreshTokenSpy).toHaveBeenCalledWith(
         'user-id',
         'new_refresh_token',
       );
-      expect(result).toEqual({
-        message: expect.any(String),
+      // Use a type for the expected result to avoid unsafe assignment
+      type RefreshTokenResponse = {
+        message: string;
+        access_token: string;
+        refresh_token: string;
+        expires_in: number;
+      };
+
+      // Using a string literal for message to avoid unsafe assignment
+      const expectedResponse: RefreshTokenResponse = {
+        message: 'translated:translation.AUTH.REFRESH_SUCCESS', // Match the translated message
         access_token: 'new_access_token',
         refresh_token: 'new_refresh_token',
         expires_in: 3600,
-      });
+      };
+
+      expect(result).toEqual(expectedResponse);
     });
 
     it('should throw ForbiddenException when user is not found', async () => {
@@ -317,14 +399,30 @@ describe('AuthService', () => {
       await expect(
         service.refreshToken('nonexistent-id', 'refresh_token'),
       ).rejects.toThrow(ForbiddenException);
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith(
-        'nonexistent-id',
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
       );
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('nonexistent-id');
     });
 
     it('should throw ForbiddenException when user has no stored refresh token', async () => {
       // Arrange
-      const userWithoutRefreshToken = { ...mockUser, hashedRefreshToken: null };
+      const userWithoutRefreshToken = {
+        _id: 'user-id',
+        email: 'test@example.com',
+        name: 'Test User',
+        password_hash: 'hashed_password',
+        hashedRefreshToken: null,
+        toObject: jest.fn().mockReturnValue({
+          _id: 'user-id',
+          email: 'test@example.com',
+          name: 'Test User',
+          password_hash: 'hashed_password',
+          hashedRefreshToken: null,
+        }),
+      } as unknown as UserDocument;
+
       jest
         .spyOn(usersService, 'findUserByIdForAuth')
         .mockResolvedValue(userWithoutRefreshToken);
@@ -333,7 +431,11 @@ describe('AuthService', () => {
       await expect(
         service.refreshToken('user-id', 'refresh_token'),
       ).rejects.toThrow(ForbiddenException);
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith('user-id');
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
+      );
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('user-id');
     });
 
     it('should throw ForbiddenException when refresh token is invalid', async () => {
@@ -349,8 +451,16 @@ describe('AuthService', () => {
       await expect(
         service.refreshToken('user-id', 'invalid_refresh_token'),
       ).rejects.toThrow(ForbiddenException);
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith('user-id');
-      expect(userAuthService.validateRefreshToken).toHaveBeenCalledWith(
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
+      );
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('user-id');
+      const validateRefreshTokenSpy = jest.spyOn(
+        userAuthService,
+        'validateRefreshToken',
+      );
+      expect(validateRefreshTokenSpy).toHaveBeenCalledWith(
         'invalid_refresh_token',
         'user-id',
       );
@@ -366,13 +476,22 @@ describe('AuthService', () => {
       const result = await service.logout('user-id');
 
       // Assert
-      expect(usersService.setCurrentRefreshToken).toHaveBeenCalledWith(
-        'user-id',
-        null,
+      const setCurrentRefreshTokenSpy = jest.spyOn(
+        usersService,
+        'setCurrentRefreshToken',
       );
-      expect(result).toEqual({
-        message: expect.any(String),
-      });
+      expect(setCurrentRefreshTokenSpy).toHaveBeenCalledWith('user-id', null);
+      // Use a type for the expected result to avoid unsafe assignment
+      type LogoutResponse = {
+        message: string;
+      };
+
+      // Using a string literal for message to avoid unsafe assignment
+      const expectedResponse: LogoutResponse = {
+        message: 'translated:translation.AUTH.LOGOUT_SUCCESS', // Match the translated message
+      };
+
+      expect(result).toEqual(expectedResponse);
     });
   });
 });

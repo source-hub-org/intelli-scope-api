@@ -1,6 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ActivityLogSanitizerService } from '../../services/activity-log-sanitizer.service';
-import { ConfigService } from '@nestjs/config';
+import {
+  Test as _Test,
+  TestingModule as _TestingModule,
+} from '@nestjs/testing';
+import { ActivityLogSanitizerService as _ActivityLogSanitizerService } from '../../services/activity-log-sanitizer.service';
+import { ConfigService as _ConfigService } from '@nestjs/config';
 
 // Create a mock implementation for testing
 class MockActivityLogSanitizerService {
@@ -16,17 +19,19 @@ class MockActivityLogSanitizerService {
     'ssn',
   ];
 
-  sanitizeLogData(logData: any): any {
+  sanitizeLogData(logData: Record<string, unknown>): Record<string, unknown> {
     const sanitized = { ...logData };
 
     if (sanitized.details && typeof sanitized.details === 'object') {
-      sanitized.details = this.sanitizeObject(sanitized.details);
+      sanitized.details = this.sanitizeObject(
+        sanitized.details as Record<string, unknown>,
+      );
     }
 
     return sanitized;
   }
 
-  sanitizeObject(obj: any): any {
+  sanitizeObject(obj: unknown): unknown {
     if (!obj || typeof obj !== 'object') {
       return obj;
     }
@@ -35,16 +40,18 @@ class MockActivityLogSanitizerService {
       return obj.map((item) => this.sanitizeObject(item));
     }
 
-    const sanitized = { ...obj };
+    const sanitized = { ...obj } as Record<string, unknown>;
 
     for (const key in sanitized) {
-      if (this.sensitiveFields.includes(key)) {
-        sanitized[key] = '[REDACTED]';
-      } else if (
-        typeof sanitized[key] === 'object' &&
-        sanitized[key] !== null
-      ) {
-        sanitized[key] = this.sanitizeObject(sanitized[key]);
+      if (Object.prototype.hasOwnProperty.call(sanitized, key)) {
+        if (this.sensitiveFields.includes(key)) {
+          sanitized[key] = '[REDACTED]';
+        } else if (
+          typeof sanitized[key] === 'object' &&
+          sanitized[key] !== null
+        ) {
+          sanitized[key] = this.sanitizeObject(sanitized[key]);
+        }
       }
     }
 
@@ -55,7 +62,7 @@ class MockActivityLogSanitizerService {
 describe('ActivityLogSanitizerService', () => {
   let service: MockActivityLogSanitizerService;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     service = new MockActivityLogSanitizerService();
   });
 
@@ -86,7 +93,9 @@ describe('ActivityLogSanitizerService', () => {
       };
 
       // Act
-      const result = service.sanitizeLogData(logData);
+      const result = service.sanitizeLogData(
+        logData as Record<string, unknown>,
+      );
 
       // Assert
       expect(result).toEqual({
@@ -127,7 +136,9 @@ describe('ActivityLogSanitizerService', () => {
       };
 
       // Act
-      const result = service.sanitizeLogData(logData);
+      const result = service.sanitizeLogData(
+        logData as Record<string, unknown>,
+      );
 
       // Assert
       expect(result).toEqual({
@@ -170,7 +181,9 @@ describe('ActivityLogSanitizerService', () => {
       };
 
       // Act
-      const result = service.sanitizeLogData(logData);
+      const result = service.sanitizeLogData(
+        logData as Record<string, unknown>,
+      );
 
       // Assert
       expect(result).toEqual({
@@ -205,7 +218,9 @@ describe('ActivityLogSanitizerService', () => {
       };
 
       // Act
-      const result = service.sanitizeLogData(logData);
+      const result = service.sanitizeLogData(
+        logData as Record<string, unknown>,
+      );
 
       // Assert
       expect(result).toEqual({
@@ -227,7 +242,9 @@ describe('ActivityLogSanitizerService', () => {
       };
 
       // Act
-      const result = service.sanitizeLogData(logData);
+      const result = service.sanitizeLogData(
+        logData as Record<string, unknown>,
+      );
 
       // Assert
       expect(result).toEqual({

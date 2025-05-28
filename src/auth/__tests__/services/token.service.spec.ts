@@ -7,7 +7,7 @@ import { createMockConfigService } from '../../../common/__tests__/test-utils';
 describe('TokenService', () => {
   let service: TokenService;
   let jwtService: JwtService;
-  let configService: ConfigService;
+  let _configService: ConfigService; // Prefixed with underscore to indicate intentionally unused
 
   const mockUser = {
     _id: 'user-id',
@@ -42,7 +42,7 @@ describe('TokenService', () => {
 
     service = module.get<TokenService>(TokenService);
     jwtService = module.get<JwtService>(JwtService);
-    configService = module.get<ConfigService>(ConfigService);
+    _configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -62,7 +62,8 @@ describe('TokenService', () => {
       const result = service.generateAccessToken(mockUser as any);
 
       // Assert
-      expect(jwtService.sign).toHaveBeenCalledWith(
+      const signSpy = jest.spyOn(jwtService, 'sign');
+      expect(signSpy).toHaveBeenCalledWith(
         {
           username: 'test@example.com',
           sub: 'user-id',
@@ -85,7 +86,8 @@ describe('TokenService', () => {
       const result = service.generateRefreshToken(mockUser as any);
 
       // Assert
-      expect(jwtService.sign).toHaveBeenCalledWith(
+      const signSpy = jest.spyOn(jwtService, 'sign');
+      expect(signSpy).toHaveBeenCalledWith(
         {
           username: 'test@example.com',
           sub: 'user-id',
@@ -110,7 +112,8 @@ describe('TokenService', () => {
       const result = service.verifyAccessToken('access_token');
 
       // Assert
-      expect(jwtService.verify).toHaveBeenCalledWith('access_token', {
+      const verifySpy = jest.spyOn(jwtService, 'verify');
+      expect(verifySpy).toHaveBeenCalledWith('access_token', {
         secret: 'test-jwt-secret',
       });
       expect(result).toEqual(mockPayload);
@@ -126,7 +129,8 @@ describe('TokenService', () => {
       const result = service.verifyAccessToken('invalid_token');
 
       // Assert
-      expect(jwtService.verify).toHaveBeenCalledWith('invalid_token', {
+      const verifySpy = jest.spyOn(jwtService, 'verify');
+      expect(verifySpy).toHaveBeenCalledWith('invalid_token', {
         secret: 'test-jwt-secret',
       });
       expect(result).toBeNull();
@@ -147,7 +151,8 @@ describe('TokenService', () => {
       const result = service.verifyRefreshToken('refresh_token');
 
       // Assert
-      expect(jwtService.verify).toHaveBeenCalledWith('refresh_token', {
+      const verifySpy = jest.spyOn(jwtService, 'verify');
+      expect(verifySpy).toHaveBeenCalledWith('refresh_token', {
         secret: 'test-jwt-refresh-secret',
       });
       expect(result).toEqual(mockPayload);
@@ -163,7 +168,8 @@ describe('TokenService', () => {
       const result = service.verifyRefreshToken('invalid_token');
 
       // Assert
-      expect(jwtService.verify).toHaveBeenCalledWith('invalid_token', {
+      const verifySpy = jest.spyOn(jwtService, 'verify');
+      expect(verifySpy).toHaveBeenCalledWith('invalid_token', {
         secret: 'test-jwt-refresh-secret',
       });
       expect(result).toBeNull();

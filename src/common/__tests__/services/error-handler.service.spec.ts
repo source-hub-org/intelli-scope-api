@@ -1,9 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-  HttpStatus,
-  HttpException,
   NotFoundException,
-  BadRequestException,
   InternalServerErrorException,
   ConflictException,
   Logger,

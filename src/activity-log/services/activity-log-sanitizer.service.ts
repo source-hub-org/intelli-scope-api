@@ -38,7 +38,10 @@ export class ActivityLogSanitizerService {
 
     // Sanitize details if it's an object
     if (sanitized.details && typeof sanitized.details === 'object') {
-      sanitized.details = this.sanitizeObject(sanitized.details);
+      sanitized.details = this.sanitizeObject(sanitized.details) as Record<
+        string,
+        unknown
+      >;
     }
 
     return sanitized;
@@ -49,7 +52,7 @@ export class ActivityLogSanitizerService {
    * @param obj Object to sanitize
    * @returns Sanitized object
    */
-  sanitizeObject(obj: any): any {
+  sanitizeObject(obj: unknown): unknown {
     // Handle non-objects
     if (!obj || typeof obj !== 'object') {
       return obj;
@@ -61,7 +64,7 @@ export class ActivityLogSanitizerService {
     }
 
     // Handle objects
-    const sanitized = { ...obj };
+    const sanitized = { ...obj } as Record<string, unknown>;
 
     for (const key in sanitized) {
       if (this.sensitiveFields.includes(key)) {
@@ -70,7 +73,9 @@ export class ActivityLogSanitizerService {
         typeof sanitized[key] === 'object' &&
         sanitized[key] !== null
       ) {
-        sanitized[key] = this.sanitizeObject(sanitized[key]);
+        sanitized[key] = this.sanitizeObject(
+          sanitized[key] as Record<string, unknown>,
+        );
       }
     }
 

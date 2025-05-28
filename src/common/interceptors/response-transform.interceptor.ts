@@ -43,7 +43,7 @@ export class ResponseTransformInterceptor<T>
       map((data) => {
         // Check if the response is already in the standard format
         if (data && typeof data === 'object' && 'success' in data) {
-          return data as Response<T>;
+          return data as unknown as Response<T>;
         }
 
         // Extract message and meta if they exist

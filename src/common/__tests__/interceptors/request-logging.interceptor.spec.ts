@@ -12,10 +12,11 @@ describe('RequestLoggingInterceptor', () => {
 
   beforeEach(async () => {
     const mockConfigService = {
-      get: jest.fn((key, defaultValue) => {
-        if (key === 'VERBOSE_REQUEST_LOGGING') return false;
-        if (key === 'REQUEST_LOG_EXCLUDE_PATHS') return '/health,/metrics';
-        return defaultValue;
+      get: jest.fn((key: string, defaultValue?: unknown) => {
+        if (key === 'VERBOSE_REQUEST_LOGGING') return false as boolean;
+        if (key === 'REQUEST_LOG_EXCLUDE_PATHS')
+          return '/health,/metrics' as string;
+        return defaultValue as string;
       }),
     };
 
@@ -83,9 +84,11 @@ describe('RequestLoggingInterceptor', () => {
         handle: () => of(responseData),
       } as CallHandler;
 
-      jest.spyOn(mockCallHandler, 'handle').mockReturnValue(of(responseData));
-      jest.spyOn(clsService, 'get').mockReturnValue(Date.now() - 100); // 100ms ago
-      jest.spyOn(Logger.prototype, 'log');
+      const handleSpy = jest.spyOn(mockCallHandler, 'handle');
+      handleSpy.mockReturnValue(of(responseData));
+      const getSpy = jest.spyOn(clsService, 'get');
+      getSpy.mockReturnValue(Date.now() - 100); // 100ms ago
+      const logSpy = jest.spyOn(Logger.prototype, 'log');
 
       // Act
       const result$ = interceptor.intercept(mockContext, mockCallHandler);
@@ -96,21 +99,24 @@ describe('RequestLoggingInterceptor', () => {
           expect(response).toEqual(responseData);
         },
         complete: () => {
-          const logCalls = (Logger.prototype.log as jest.Mock).mock.calls;
+          const logCalls = logSpy.mock.calls;
           expect(logCalls.length).toBeGreaterThanOrEqual(2);
 
           // Check if any call contains the expected strings
-          const requestLogFound = logCalls.some(
-            (call) =>
-              call[0].includes('GET /api/test') &&
-              call[0].includes('Incoming Request'),
-          );
+          const requestLogFound = logCalls.some((call) => {
+            const message = String(call[0]);
+            return (
+              message.includes('GET /api/test') &&
+              message.includes('Incoming Request')
+            );
+          });
 
-          const responseLogFound = logCalls.some(
-            (call) =>
-              call[0].includes('GET /api/test') &&
-              call[0].includes('Response:'),
-          );
+          const responseLogFound = logCalls.some((call) => {
+            const message = String(call[0]);
+            return (
+              message.includes('GET /api/test') && message.includes('Response:')
+            );
+          });
 
           expect(requestLogFound).toBe(true);
           expect(responseLogFound).toBe(true);
@@ -146,14 +152,15 @@ describe('RequestLoggingInterceptor', () => {
         handle: () => of(responseData),
       } as CallHandler;
 
-      jest.spyOn(mockCallHandler, 'handle').mockReturnValue(of(responseData));
-      jest.spyOn(Logger.prototype, 'log');
+      const handleSpy = jest.spyOn(mockCallHandler, 'handle');
+      handleSpy.mockReturnValue(of(responseData));
+      const logSpy = jest.spyOn(Logger.prototype, 'log');
 
       // Act
-      interceptor.intercept(mockContext, mockCallHandler).subscribe();
+      void interceptor.intercept(mockContext, mockCallHandler).subscribe();
 
       // Assert
-      expect(Logger.prototype.log).not.toHaveBeenCalled();
+      expect(logSpy).not.toHaveBeenCalled();
     });
 
     it('should log errors', (done) => {
@@ -178,8 +185,9 @@ describe('RequestLoggingInterceptor', () => {
         getType: jest.fn().mockReturnValue('http'),
       } as unknown as ExecutionContext;
 
-      jest.spyOn(clsService, 'get').mockReturnValue(Date.now() - 100); // 100ms ago
-      jest.spyOn(Logger.prototype, 'error');
+      const getSpy = jest.spyOn(clsService, 'get');
+      getSpy.mockReturnValue(Date.now() - 100); // 100ms ago
+      const errorSpy = jest.spyOn(Logger.prototype, 'error');
 
       // Create an observable that will emit an error
       const errorObservable = new Observable((subscriber) => {
@@ -191,23 +199,26 @@ describe('RequestLoggingInterceptor', () => {
         handle: () => errorObservable,
       } as CallHandler;
 
-      jest.spyOn(mockCallHandler, 'handle').mockReturnValue(errorObservable);
+      const handleSpy = jest.spyOn(mockCallHandler, 'handle');
+      handleSpy.mockReturnValue(errorObservable);
 
       // Act - subscribe to trigger the error
       interceptor.intercept(mockContext, mockCallHandler).subscribe({
         error: (err) => {
           // Assert
-          expect(err.message).toBe('Test error');
-          expect(Logger.prototype.error).toHaveBeenCalled();
-          const errorLogCalls = (Logger.prototype.error as jest.Mock).mock
-            .calls;
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          expect(errorMessage).toBe('Test error');
+          expect(errorSpy).toHaveBeenCalled();
+          const errorLogCalls = errorSpy.mock.calls;
           expect(errorLogCalls.length).toBeGreaterThanOrEqual(1);
 
           // Check if any call contains the expected strings
-          const errorLogFound = errorLogCalls.some(
-            (call) =>
-              call[0].includes('GET /api/test') && call[0].includes('Error:'),
-          );
+          const errorLogFound = errorLogCalls.some((call) => {
+            const message = String(call[0]);
+            return (
+              message.includes('GET /api/test') && message.includes('Error:')
+            );
+          });
 
           expect(errorLogFound).toBe(true);
           done();
@@ -225,104 +236,115 @@ describe('RequestLoggingInterceptor', () => {
         handle: () => of({}),
       } as CallHandler;
 
-      jest.spyOn(mockCallHandler, 'handle').mockReturnValue(of({}));
-      jest.spyOn(Logger.prototype, 'log');
+      const handleSpy = jest.spyOn(mockCallHandler, 'handle');
+      handleSpy.mockReturnValue(of({}));
+      const logSpy = jest.spyOn(Logger.prototype, 'log');
 
       // Act
-      interceptor.intercept(mockContext, mockCallHandler).subscribe();
+      void interceptor.intercept(mockContext, mockCallHandler).subscribe();
 
       // Assert
-      expect(Logger.prototype.log).not.toHaveBeenCalled();
+      expect(logSpy).not.toHaveBeenCalled();
     });
 
     it('should log request body in verbose mode', (done) => {
       // Arrange - create a new interceptor with verbose logging enabled
       const mockConfigService = {
-        get: jest.fn((key, defaultValue) => {
-          if (key === 'VERBOSE_REQUEST_LOGGING') return true;
-          if (key === 'REQUEST_LOG_EXCLUDE_PATHS') return '/health,/metrics';
-          return defaultValue;
+        get: jest.fn((key: string, defaultValue?: unknown) => {
+          if (key === 'VERBOSE_REQUEST_LOGGING') return true as boolean;
+          if (key === 'REQUEST_LOG_EXCLUDE_PATHS')
+            return '/health,/metrics' as string;
+          return defaultValue as string;
         }),
       };
 
-      const module = Test.createTestingModule({
-        providers: [
-          RequestLoggingInterceptor,
-          {
-            provide: ClsService,
-            useValue: createMockClsService(),
-          },
-          {
-            provide: ConfigService,
-            useValue: mockConfigService,
-          },
-        ],
-      }).compile();
+      // Use async/await with proper error handling to avoid floating promises
+      void (async () => {
+        try {
+          const compiledModule = await Test.createTestingModule({
+            providers: [
+              RequestLoggingInterceptor,
+              {
+                provide: ClsService,
+                useValue: createMockClsService(),
+              },
+              {
+                provide: ConfigService,
+                useValue: mockConfigService,
+              },
+            ],
+          }).compile();
+          const verboseInterceptor =
+            compiledModule.get<RequestLoggingInterceptor>(
+              RequestLoggingInterceptor,
+            );
 
-      module.then((compiledModule) => {
-        const verboseInterceptor =
-          compiledModule.get<RequestLoggingInterceptor>(
-            RequestLoggingInterceptor,
-          );
+          const mockRequest = {
+            method: 'POST',
+            url: '/api/users',
+            path: '/api/users',
+            ip: '127.0.0.1',
+            headers: {
+              'user-agent': 'Mozilla/5.0',
+            },
+            body: {
+              username: 'testuser',
+              password: 'secret123',
+            },
+          };
 
-        const mockRequest = {
-          method: 'POST',
-          url: '/api/users',
-          path: '/api/users',
-          ip: '127.0.0.1',
-          headers: {
-            'user-agent': 'Mozilla/5.0',
-          },
-          body: {
-            username: 'testuser',
-            password: 'secret123',
-          },
-        };
-
-        const mockContext = {
-          switchToHttp: jest.fn().mockReturnValue({
-            getRequest: jest.fn().mockReturnValue(mockRequest),
-            getResponse: jest.fn().mockReturnValue({
-              statusCode: 201,
+          const mockContext = {
+            switchToHttp: jest.fn().mockReturnValue({
+              getRequest: jest.fn().mockReturnValue(mockRequest),
+              getResponse: jest.fn().mockReturnValue({
+                statusCode: 201,
+              }),
             }),
-          }),
-          getType: jest.fn().mockReturnValue('http'),
-        } as unknown as ExecutionContext;
+            getType: jest.fn().mockReturnValue('http'),
+          } as unknown as ExecutionContext;
 
-        const responseData = { id: 1, username: 'testuser' };
-        const mockCallHandler = {
-          handle: () => of(responseData),
-        } as CallHandler;
+          const responseData = { id: 1, username: 'testuser' };
+          const mockCallHandler = {
+            handle: () => of(responseData),
+          } as CallHandler;
 
-        jest.spyOn(mockCallHandler, 'handle').mockReturnValue(of(responseData));
-        jest.spyOn(Logger.prototype, 'debug');
+          const handleSpy = jest.spyOn(mockCallHandler, 'handle');
+          handleSpy.mockReturnValue(of(responseData));
+          const debugSpy = jest.spyOn(Logger.prototype, 'debug');
 
-        // Act
-        verboseInterceptor.intercept(mockContext, mockCallHandler).subscribe({
-          complete: () => {
-            // Assert
-            const debugCalls = (Logger.prototype.debug as jest.Mock).mock.calls;
-            expect(debugCalls.length).toBeGreaterThanOrEqual(2);
+          // Act
+          verboseInterceptor.intercept(mockContext, mockCallHandler).subscribe({
+            complete: () => {
+              // Assert
+              const debugCalls = debugSpy.mock.calls;
+              expect(debugCalls.length).toBeGreaterThanOrEqual(2);
 
-            // Check if any call contains the expected strings
-            const requestBodyLogFound = debugCalls.some(
-              (call) =>
-                call[0].includes('Request Body:') &&
-                !call[0].includes('secret123'),
-            );
+              // Check if any call contains the expected strings
+              const requestBodyLogFound = debugCalls.some((call) => {
+                const message = String(call[0]);
+                return (
+                  message.includes('Request Body:') &&
+                  !message.includes('secret123')
+                );
+              });
 
-            const responseBodyLogFound = debugCalls.some(
-              (call) =>
-                call[0].includes('Response Body:') &&
-                call[0].includes('testuser'),
-            );
+              const responseBodyLogFound = debugCalls.some((call) => {
+                const message = String(call[0]);
+                return (
+                  message.includes('Response Body:') &&
+                  message.includes('testuser')
+                );
+              });
 
-            expect(requestBodyLogFound).toBe(true);
-            expect(responseBodyLogFound).toBe(true);
-            done();
-          },
-        });
-      });
+              expect(requestBodyLogFound).toBe(true);
+              expect(responseBodyLogFound).toBe(true);
+              done();
+            },
+          });
+        } catch (error) {
+          done(error instanceof Error ? error : new Error(String(error)));
+        }
+      })();
     });
   });
 });

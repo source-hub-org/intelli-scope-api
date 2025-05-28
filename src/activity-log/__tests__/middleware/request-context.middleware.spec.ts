@@ -58,7 +58,7 @@ describe('RequestContextMiddleware', () => {
       const mockResponse = {} as Response;
       const mockNext = jest.fn();
 
-      jest.spyOn(clsService, 'set');
+      const setSpy = jest.spyOn(clsService, 'set');
       jest.spyOn(clsService, 'getId').mockReturnValue('test-request-id');
       jest.spyOn(Date, 'now').mockReturnValue(1234567890);
 
@@ -66,13 +66,10 @@ describe('RequestContextMiddleware', () => {
       middleware.use(mockRequest, mockResponse, mockNext);
 
       // Assert
-      expect(clsService.set).toHaveBeenCalledWith('request', mockRequest);
-      expect(clsService.set).toHaveBeenCalledWith('response', mockResponse);
-      expect(clsService.set).toHaveBeenCalledWith('startTime', 1234567890);
-      expect(clsService.set).toHaveBeenCalledWith(
-        'requestId',
-        'test-request-id',
-      );
+      expect(setSpy).toHaveBeenCalledWith('request', mockRequest);
+      expect(setSpy).toHaveBeenCalledWith('response', mockResponse);
+      expect(setSpy).toHaveBeenCalledWith('startTime', 1234567890);
+      expect(setSpy).toHaveBeenCalledWith('requestId', 'test-request-id');
       expect(mockNext).toHaveBeenCalled();
     });
 
@@ -99,7 +96,7 @@ describe('RequestContextMiddleware', () => {
       const mockNext = jest.fn();
       const error = new Error('Test error');
 
-      jest.spyOn(clsService, 'set').mockImplementation(() => {
+      const setSpy = jest.spyOn(clsService, 'set').mockImplementation(() => {
         throw error;
       });
 
@@ -107,7 +104,7 @@ describe('RequestContextMiddleware', () => {
       middleware.use(mockRequest, mockResponse, mockNext);
 
       // Assert
-      expect(clsService.set).toHaveBeenCalledWith('request', mockRequest);
+      expect(setSpy).toHaveBeenCalledWith('request', mockRequest);
       expect(mockNext).toHaveBeenCalledWith(error);
     });
   });

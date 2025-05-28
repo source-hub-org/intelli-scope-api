@@ -12,7 +12,7 @@ import { ActivityLogSanitizerService } from '../services/activity-log-sanitizer.
 import { ActivityLogQueryService } from '../services/activity-log-query.service';
 import {
   createMockConfigService,
-  createMockModel,
+  // Removed unused import
 } from '../../common/__tests__/test-utils';
 
 describe('ActivityLogService', () => {
@@ -25,15 +25,37 @@ describe('ActivityLogService', () => {
   const mockActivityLog = {
     _id: 'log-id',
     userId: new Types.ObjectId('507f1f77bcf86cd799439011'),
-    action: 'login',
-    resource: 'auth',
-    details: { ip: '127.0.0.1' },
+    actionType: 'LOGIN_SUCCESS',
+    actor: {
+      username: 'Test User',
+      ipAddress: '127.0.0.1',
+      userAgent: 'Test Agent',
+    },
+    resource: {
+      type: 'auth',
+      id: 'auth-1',
+      displayName: 'Authentication',
+    },
+    details: {
+      httpMethod: 'POST',
+      httpPath: '/api/auth/login',
+      requestParams: {},
+      requestQuery: {},
+    },
+    operationStatus: 'SUCCESS',
     timestamp: new Date(),
+    traceId: 'test-trace-id',
+    __v: 0,
   };
 
   beforeEach(async () => {
     const mockSanitizerService = {
-      sanitizeLogData: jest.fn().mockImplementation((data) => data),
+      sanitizeLogData: jest
+        .fn()
+        .mockImplementation(
+          (data) =>
+            data as unknown as Partial<ActivityLog> & { userId: string },
+        ),
     };
 
     const mockQueryService = {
@@ -99,26 +121,44 @@ describe('ActivityLogService', () => {
       const logData = {
         userId: 'user-id',
         actionType: 'LOGIN_SUCCESS',
-        resource: { type: 'auth' },
-        details: { ip: '127.0.0.1' },
+        actor: {
+          username: 'Test User',
+          ipAddress: '127.0.0.1',
+          userAgent: 'Test Agent',
+        },
+        resource: {
+          type: 'auth',
+          id: 'auth-1',
+        },
+        details: {
+          httpMethod: 'POST',
+          httpPath: '/api/auth/login',
+        },
+        operationStatus: 'SUCCESS',
       };
 
       // Mock the sanitizer to return the data
       jest
         .spyOn(sanitizerService, 'sanitizeLogData')
-        .mockReturnValueOnce(logData as any);
+        .mockReturnValueOnce(
+          logData as unknown as Partial<ActivityLog> & { userId: string },
+        );
 
       // Mock the ObjectId constructor
       const mockObjectId = function () {
         return 'user-id';
       };
-      mockObjectId.prototype = Object.create(Types.ObjectId.prototype);
+      mockObjectId.prototype = Object.create(
+        Types.ObjectId.prototype,
+      ) as Record<string, unknown>;
       jest
         .spyOn(Types, 'ObjectId')
-        .mockImplementation(() => mockObjectId as any);
+        .mockImplementation(() => mockObjectId as unknown as Types.ObjectId);
 
       // Create a spy for the save method
-      const saveSpy = jest.fn().mockResolvedValue(mockActivityLog);
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue(mockActivityLog as unknown as ActivityLogDocument);
 
       // Create a custom model that uses our spy
       const testModel = function () {
@@ -128,13 +168,18 @@ describe('ActivityLogService', () => {
       };
 
       // Replace the model in the service
-      service['activityLogModel'] = testModel as any;
+      service['activityLogModel'] =
+        testModel as unknown as Model<ActivityLogDocument>;
 
       // Act
-      await service.logActivity(logData as any);
+      await service.logActivity(
+        logData as unknown as Partial<ActivityLog> & { userId: string },
+      );
 
       // Assert
-      expect(sanitizerService.sanitizeLogData).toHaveBeenCalledWith(logData);
+      expect(
+        jest.spyOn(sanitizerService, 'sanitizeLogData'),
+      ).toHaveBeenCalledWith(logData);
       expect(saveSpy).toHaveBeenCalled();
     });
 
@@ -143,8 +188,20 @@ describe('ActivityLogService', () => {
       const logData = {
         userId: 'user-id',
         actionType: 'LOGIN_SUCCESS',
-        resource: { type: 'auth' },
-        details: { ip: '127.0.0.1' },
+        actor: {
+          username: 'Test User',
+          ipAddress: '127.0.0.1',
+          userAgent: 'Test Agent',
+        },
+        resource: {
+          type: 'auth',
+          id: 'auth-1',
+        },
+        details: {
+          httpMethod: 'POST',
+          httpPath: '/api/auth/login',
+        },
+        operationStatus: 'SUCCESS',
       };
 
       // Mock the ConfigService to return false for ACTIVITY_LOGGING_ENABLED
@@ -162,10 +219,14 @@ describe('ActivityLogService', () => {
       jest.clearAllMocks();
 
       // Act
-      await disabledService.logActivity(logData as any);
+      await disabledService.logActivity(
+        logData as unknown as Partial<ActivityLog> & { userId: string },
+      );
 
       // Assert
-      expect(sanitizerService.sanitizeLogData).not.toHaveBeenCalled();
+      expect(
+        jest.spyOn(sanitizerService, 'sanitizeLogData'),
+      ).not.toHaveBeenCalled();
     });
 
     it('should handle errors during logging', async () => {
@@ -173,14 +234,28 @@ describe('ActivityLogService', () => {
       const logData = {
         userId: 'user-id',
         actionType: 'LOGIN_SUCCESS',
-        resource: { type: 'auth' },
-        details: { ip: '127.0.0.1' },
+        actor: {
+          username: 'Test User',
+          ipAddress: '127.0.0.1',
+          userAgent: 'Test Agent',
+        },
+        resource: {
+          type: 'auth',
+          id: 'auth-1',
+        },
+        details: {
+          httpMethod: 'POST',
+          httpPath: '/api/auth/login',
+        },
+        operationStatus: 'SUCCESS',
       };
 
       // Mock the sanitizer to return the data
       jest
         .spyOn(sanitizerService, 'sanitizeLogData')
-        .mockReturnValueOnce(logData as any);
+        .mockReturnValueOnce(
+          logData as unknown as Partial<ActivityLog> & { userId: string },
+        );
 
       // Create a custom mock for the model that throws an error
       const errorModel = function () {
@@ -190,14 +265,21 @@ describe('ActivityLogService', () => {
       };
 
       // Replace the model in the service
-      service['activityLogModel'] = errorModel as any;
+      service['activityLogModel'] =
+        errorModel as unknown as Model<ActivityLogDocument>;
 
       // Mock the logger to prevent console output
       jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
 
       // Act & Assert
-      await expect(service.logActivity(logData as any)).resolves.not.toThrow();
-      expect(sanitizerService.sanitizeLogData).toHaveBeenCalledWith(logData);
+      await expect(
+        service.logActivity(
+          logData as unknown as Partial<ActivityLog> & { userId: string },
+        ),
+      ).resolves.not.toThrow();
+      expect(
+        jest.spyOn(sanitizerService, 'sanitizeLogData'),
+      ).toHaveBeenCalledWith(logData);
     });
   });
 
@@ -207,7 +289,9 @@ describe('ActivityLogService', () => {
       const filter = { userId: 'user-id' };
       const options = { page: 1, limit: 10 };
       const expectedResult = {
-        data: [mockActivityLog as any],
+        data: [
+          { ...mockActivityLog, __v: 0 } as unknown as ActivityLogDocument,
+        ],
         meta: {
           total: 1,
           page: 1,
@@ -224,7 +308,8 @@ describe('ActivityLogService', () => {
       const result = await service.queryLogs(filter, options);
 
       // Assert
-      expect(queryService.queryLogs).toHaveBeenCalledWith(filter, options);
+      const queryLogsSpy = jest.spyOn(queryService, 'queryLogs');
+      expect(queryLogsSpy).toHaveBeenCalledWith(filter, options);
       expect(result).toEqual(expectedResult);
     });
   });

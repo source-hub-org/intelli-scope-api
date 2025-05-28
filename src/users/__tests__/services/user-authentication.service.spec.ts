@@ -16,7 +16,7 @@ jest.mock('bcrypt');
 describe('UserAuthenticationService', () => {
   let service: UserAuthenticationService;
   let userModel: Model<UserDocument>;
-  let i18nService: I18nService;
+  let _i18nService: I18nService;
 
   const mockUser = {
     _id: 'user-id',
@@ -46,7 +46,7 @@ describe('UserAuthenticationService', () => {
 
     service = module.get<UserAuthenticationService>(UserAuthenticationService);
     userModel = module.get<Model<UserDocument>>(getModelToken(User.name));
-    i18nService = module.get<I18nService>(I18nService);
+    _i18nService = module.get<I18nService>(I18nService);
   });
 
   afterEach(() => {
@@ -66,7 +66,8 @@ describe('UserAuthenticationService', () => {
       const result = await service.hashPassword('password');
 
       // Assert
-      expect(bcrypt.hash).toHaveBeenCalledWith('password', 10);
+      const hashSpy = jest.spyOn(bcrypt, 'hash');
+      expect(hashSpy).toHaveBeenCalledWith('password', 10);
       expect(result).toBe('hashed_password');
     });
 
@@ -168,8 +169,10 @@ describe('UserAuthenticationService', () => {
       await service.setCurrentRefreshToken('user-id', null);
 
       // Assert
-      expect(bcrypt.hash).not.toHaveBeenCalled();
-      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith('user-id', {
+      const hashSpy = jest.spyOn(bcrypt, 'hash');
+      expect(hashSpy).not.toHaveBeenCalled();
+      const findByIdAndUpdateSpy = jest.spyOn(userModel, 'findByIdAndUpdate');
+      expect(findByIdAndUpdateSpy).toHaveBeenCalledWith('user-id', {
         hashedRefreshToken: null,
       });
     });
@@ -185,8 +188,10 @@ describe('UserAuthenticationService', () => {
       await expect(
         service.setCurrentRefreshToken('user-id', 'refresh_token'),
       ).rejects.toThrow(InternalServerErrorException);
-      expect(bcrypt.hash).toHaveBeenCalledWith('refresh_token', 10);
-      expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
+      const hashSpy = jest.spyOn(bcrypt, 'hash');
+      expect(hashSpy).toHaveBeenCalledWith('refresh_token', 10);
+      const findByIdAndUpdateSpy = jest.spyOn(userModel, 'findByIdAndUpdate');
+      expect(findByIdAndUpdateSpy).not.toHaveBeenCalled();
     });
   });
 

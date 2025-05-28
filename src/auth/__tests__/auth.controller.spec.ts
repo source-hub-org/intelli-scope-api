@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
-import { LoginDto } from '../dto';
+// Removed unused import: LoginDto
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -62,7 +62,8 @@ describe('AuthController', () => {
       const result = await controller.login(mockRequest as any);
 
       // Assert
-      expect(authService.login).toHaveBeenCalledWith(mockUser);
+      const loginSpy = jest.spyOn(authService, 'login');
+      expect(loginSpy).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
     });
   });
@@ -108,10 +109,8 @@ describe('AuthController', () => {
       const result = await controller.refreshToken(mockRequest as any);
 
       // Assert
-      expect(authService.refreshToken).toHaveBeenCalledWith(
-        'user-id',
-        'refresh_token',
-      );
+      const refreshTokenSpy = jest.spyOn(authService, 'refreshToken');
+      expect(refreshTokenSpy).toHaveBeenCalledWith('user-id', 'refresh_token');
       expect(result).toEqual(mockRefreshResponse);
     });
   });
@@ -134,7 +133,8 @@ describe('AuthController', () => {
       const result = await controller.logout(mockRequest as any);
 
       // Assert
-      expect(authService.logout).toHaveBeenCalledWith('user-id');
+      const logoutSpy = jest.spyOn(authService, 'logout');
+      expect(logoutSpy).toHaveBeenCalledWith('user-id');
       expect(result).toEqual(mockLogoutResponse);
     });
   });

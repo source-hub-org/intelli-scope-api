@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { I18nService, I18nContext } from 'nestjs-i18n';
+import { Request } from 'express';
 import { JwtRefreshTokenStrategy } from '../../strategies/jwt-refresh.strategy';
 import { UsersService } from '../../../users/users.service';
+import { UserDocument } from '../../../users/schemas/user.schema';
 import {
   createMockI18nService,
   createMockConfigService,
@@ -18,7 +20,8 @@ describe('JwtRefreshTokenStrategy', () => {
   let configService: ConfigService;
   let i18nService: I18nService;
 
-  const mockUser = {
+  // Create a properly typed mock user
+  const mockUser: Partial<UserDocument> = {
     _id: 'user-id',
     email: 'test@example.com',
     name: 'Test User',
@@ -31,7 +34,13 @@ describe('JwtRefreshTokenStrategy', () => {
 
   beforeEach(async () => {
     // Mock I18nContext.current()
-    jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en' } as any);
+    jest.spyOn(I18nContext, 'current').mockReturnValue({
+      lang: 'en',
+      t: jest.fn().mockImplementation((key: string) => `translated:${key}`),
+      service: {
+        hbsHelper: jest.fn().mockReturnValue(''),
+      },
+    } as unknown as I18nContext<unknown>);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -67,26 +76,50 @@ describe('JwtRefreshTokenStrategy', () => {
     expect(strategy).toBeDefined();
   });
 
+  // Define types for the test
+  type JwtPayload = {
+    sub: string;
+    username: string;
+    tokenType: string;
+  };
+
+  // Create a type for the request with refresh token
+  type RefreshTokenRequest = Request & {
+    body: {
+      refresh_token?: string;
+    };
+  };
+
   describe('validate', () => {
     it('should return user info when refresh token is valid', async () => {
       // Arrange
-      const payload = {
+      const payload: JwtPayload = {
         sub: 'user-id',
         username: 'test@example.com',
         tokenType: 'refresh',
       };
-      const request = { body: { refresh_token: 'refresh_token' } };
+      const request: Partial<RefreshTokenRequest> = {
+        body: { refresh_token: 'refresh_token' },
+      };
       jest
         .spyOn(usersService, 'findUserByIdForAuth')
-        .mockResolvedValue(mockUser as any);
+        .mockResolvedValue(mockUser as UserDocument);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       // Act
-      const result = await strategy.validate(request as any, payload);
+      const result = await strategy.validate(
+        request as RefreshTokenRequest,
+        payload,
+      );
 
       // Assert
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith('user-id');
-      expect(bcrypt.compare).toHaveBeenCalledWith(
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
+      );
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('user-id');
+      const bcryptCompareSpy = jest.spyOn(bcrypt, 'compare');
+      expect(bcryptCompareSpy).toHaveBeenCalledWith(
         'refresh_token',
         'hashed_refresh_token',
       );
@@ -99,77 +132,97 @@ describe('JwtRefreshTokenStrategy', () => {
 
     it('should throw UnauthorizedException when refresh token is missing from request', async () => {
       // Arrange
-      const payload = {
+      const payload: JwtPayload = {
         sub: 'user-id',
         username: 'test@example.com',
         tokenType: 'refresh',
       };
-      const request = { body: {} };
+      const request: Partial<RefreshTokenRequest> = { body: {} };
 
       // Act & Assert
-      await expect(strategy.validate(request as any, payload)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        strategy.validate(request as RefreshTokenRequest, payload),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw ForbiddenException when user is not found', async () => {
       // Arrange
-      const payload = {
+      const payload: JwtPayload = {
         sub: 'nonexistent-id',
         username: 'test@example.com',
         tokenType: 'refresh',
       };
-      const request = { body: { refresh_token: 'refresh_token' } };
+      const request: Partial<RefreshTokenRequest> = {
+        body: { refresh_token: 'refresh_token' },
+      };
       jest.spyOn(usersService, 'findUserByIdForAuth').mockResolvedValue(null);
 
       // Act & Assert
-      await expect(strategy.validate(request as any, payload)).rejects.toThrow(
-        ForbiddenException,
+      await expect(
+        strategy.validate(request as RefreshTokenRequest, payload),
+      ).rejects.toThrow(ForbiddenException);
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
       );
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith(
-        'nonexistent-id',
-      );
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('nonexistent-id');
     });
 
     it('should throw ForbiddenException when user has no stored refresh token', async () => {
       // Arrange
-      const payload = {
+      const payload: JwtPayload = {
         sub: 'user-id',
         username: 'test@example.com',
         tokenType: 'refresh',
       };
-      const request = { body: { refresh_token: 'refresh_token' } };
-      const userWithoutRefreshToken = { ...mockUser, hashedRefreshToken: null };
+      const request: Partial<RefreshTokenRequest> = {
+        body: { refresh_token: 'refresh_token' },
+      };
+      const userWithoutRefreshToken: Partial<UserDocument> = {
+        ...mockUser,
+        hashedRefreshToken: null,
+      };
       jest
         .spyOn(usersService, 'findUserByIdForAuth')
-        .mockResolvedValue(userWithoutRefreshToken as any);
+        .mockResolvedValue(userWithoutRefreshToken as UserDocument);
 
       // Act & Assert
-      await expect(strategy.validate(request as any, payload)).rejects.toThrow(
-        ForbiddenException,
+      await expect(
+        strategy.validate(request as RefreshTokenRequest, payload),
+      ).rejects.toThrow(ForbiddenException);
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
       );
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith('user-id');
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('user-id');
     });
 
     it('should throw ForbiddenException when refresh token does not match', async () => {
       // Arrange
-      const payload = {
+      const payload: JwtPayload = {
         sub: 'user-id',
         username: 'test@example.com',
         tokenType: 'refresh',
       };
-      const request = { body: { refresh_token: 'invalid_refresh_token' } };
+      const request: Partial<RefreshTokenRequest> = {
+        body: { refresh_token: 'invalid_refresh_token' },
+      };
       jest
         .spyOn(usersService, 'findUserByIdForAuth')
-        .mockResolvedValue(mockUser as any);
+        .mockResolvedValue(mockUser as UserDocument);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       // Act & Assert
-      await expect(strategy.validate(request as any, payload)).rejects.toThrow(
-        ForbiddenException,
+      await expect(
+        strategy.validate(request as RefreshTokenRequest, payload),
+      ).rejects.toThrow(ForbiddenException);
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
       );
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith('user-id');
-      expect(bcrypt.compare).toHaveBeenCalledWith(
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('user-id');
+      const bcryptCompareSpy = jest.spyOn(bcrypt, 'compare');
+      expect(bcryptCompareSpy).toHaveBeenCalledWith(
         'invalid_refresh_token',
         'hashed_refresh_token',
       );
@@ -177,26 +230,33 @@ describe('JwtRefreshTokenStrategy', () => {
 
     it('should throw ForbiddenException when bcrypt.compare throws an error', async () => {
       // Arrange
-      const payload = {
+      const payload: JwtPayload = {
         sub: 'user-id',
         username: 'test@example.com',
         tokenType: 'refresh',
       };
-      const request = { body: { refresh_token: 'refresh_token' } };
+      const request: Partial<RefreshTokenRequest> = {
+        body: { refresh_token: 'refresh_token' },
+      };
       jest
         .spyOn(usersService, 'findUserByIdForAuth')
-        .mockResolvedValue(mockUser as any);
+        .mockResolvedValue(mockUser as UserDocument);
       (bcrypt.compare as jest.Mock).mockRejectedValue(
         new Error('Bcrypt error'),
       );
       jest.spyOn(console, 'error').mockImplementation(() => {});
 
       // Act & Assert
-      await expect(strategy.validate(request as any, payload)).rejects.toThrow(
-        ForbiddenException,
+      await expect(
+        strategy.validate(request as RefreshTokenRequest, payload),
+      ).rejects.toThrow(ForbiddenException);
+      const findUserByIdForAuthSpy = jest.spyOn(
+        usersService,
+        'findUserByIdForAuth',
       );
-      expect(usersService.findUserByIdForAuth).toHaveBeenCalledWith('user-id');
-      expect(bcrypt.compare).toHaveBeenCalledWith(
+      expect(findUserByIdForAuthSpy).toHaveBeenCalledWith('user-id');
+      const bcryptCompareSpy = jest.spyOn(bcrypt, 'compare');
+      expect(bcryptCompareSpy).toHaveBeenCalledWith(
         'refresh_token',
         'hashed_refresh_token',
       );

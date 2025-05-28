@@ -5,7 +5,6 @@ import { ValidationPipe } from '../../pipes/validation.pipe';
 import { createMockI18nService } from '../test-utils';
 import { IsString, IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 import * as classValidator from 'class-validator';
-import { plainToInstance } from 'class-transformer';
 
 // Create a test DTO class for validation
 class TestDto {

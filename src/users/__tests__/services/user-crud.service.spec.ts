@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Query } from 'mongoose';
 import {
   ConflictException,
   InternalServerErrorException,
@@ -19,12 +19,26 @@ import {
   createMockModel,
 } from '../../../common/__tests__/test-utils';
 
+// Create a type for the mongoose Query mock
+interface MockQuery<T = unknown> {
+  exec: jest.Mock<Promise<T>>;
+  select?: jest.Mock<MockQuery<T>>;
+}
+
+// Helper function to create a mock query with proper typing
+function createMockMongooseQuery<T>(resolvedValue: T): MockQuery<T> {
+  return {
+    exec: jest.fn<Promise<T>, []>().mockResolvedValueOnce(resolvedValue),
+    select: jest.fn().mockReturnThis(),
+  };
+}
+
 describe('UserCrudService', () => {
   let service: UserCrudService;
   let userModel: Model<UserDocument>;
   let authService: UserAuthenticationService;
-  let i18nService: I18nService;
-  let errorHandlerService: ErrorHandlerService;
+  let _i18nService: I18nService;
+  let _errorHandlerService: ErrorHandlerService;
 
   const mockUser = createMockDocument({
     _id: 'user-id',
@@ -41,7 +55,13 @@ describe('UserCrudService', () => {
 
   beforeEach(async () => {
     // Mock I18nContext.current()
-    jest.spyOn(I18nContext, 'current').mockReturnValue({ lang: 'en' } as any);
+    jest.spyOn(I18nContext, 'current').mockReturnValue({
+      lang: 'en',
+      t: jest.fn().mockImplementation((key: string) => `translated:${key}`),
+      service: {
+        hbsHelper: jest.fn().mockReturnValue(''),
+      },
+    } as unknown as I18nContext<unknown>);
 
     const mockUserAuthService = {
       hashPassword: jest.fn().mockResolvedValue('hashed_password'),
@@ -80,8 +100,8 @@ describe('UserCrudService', () => {
     authService = module.get<UserAuthenticationService>(
       UserAuthenticationService,
     );
-    i18nService = module.get<I18nService>(I18nService);
-    errorHandlerService = module.get<ErrorHandlerService>(ErrorHandlerService);
+    _i18nService = module.get<I18nService>(I18nService);
+    _errorHandlerService = module.get<ErrorHandlerService>(ErrorHandlerService);
   });
 
   afterEach(() => {
@@ -102,9 +122,13 @@ describe('UserCrudService', () => {
         name: 'New User',
       };
 
-      jest.spyOn(userModel, 'findOne').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(null),
-      } as any);
+      // Create a properly typed mock query
+      const mockQuery = createMockMongooseQuery(null);
+      jest
+        .spyOn(userModel, 'findOne')
+        .mockReturnValueOnce(
+          mockQuery as unknown as Query<unknown, UserDocument>,
+        );
 
       const saveSpy = jest.spyOn(userModel.prototype, 'save');
       saveSpy.mockResolvedValueOnce(mockUser);
@@ -113,12 +137,16 @@ describe('UserCrudService', () => {
       const result = await service.create(createUserDto);
 
       // Assert
-      expect(userModel.findOne).toHaveBeenCalledWith({
+      const findOneSpy = jest.spyOn(userModel, 'findOne');
+      expect(findOneSpy.mock.calls[0][0]).toEqual({
         email: 'new@example.com',
       });
-      expect(authService.hashPassword).toHaveBeenCalledWith('password');
+      const hashPasswordSpy = jest.spyOn(authService, 'hashPassword');
+      expect(hashPasswordSpy.mock.calls[0][0]).toBe('password');
       expect(result).toEqual(
-        expect.objectContaining(mockUserWithoutSensitiveFields),
+        expect.objectContaining<Record<string, unknown>>(
+          mockUserWithoutSensitiveFields,
+        ),
       );
       expect(result).not.toHaveProperty('password_hash');
       expect(result).not.toHaveProperty('hashedRefreshToken');
@@ -133,15 +161,20 @@ describe('UserCrudService', () => {
         name: 'Existing User',
       };
 
-      jest.spyOn(userModel, 'findOne').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(mockUser),
-      } as any);
+      // Create a properly typed mock query
+      const mockQuery = createMockMongooseQuery(mockUser);
+      jest
+        .spyOn(userModel, 'findOne')
+        .mockReturnValueOnce(
+          mockQuery as unknown as Query<unknown, UserDocument>,
+        );
 
       // Act & Assert
       await expect(service.create(createUserDto)).rejects.toThrow(
         ConflictException,
       );
-      expect(userModel.findOne).toHaveBeenCalledWith({
+      const findOneSpy = jest.spyOn(userModel, 'findOne');
+      expect(findOneSpy.mock.calls[0][0]).toEqual({
         email: 'existing@example.com',
       });
     });
@@ -156,13 +189,16 @@ describe('UserCrudService', () => {
       };
 
       // Mock the findOne method to return null (user doesn't exist)
-      jest.spyOn(userModel, 'findOne').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(null),
-      } as any);
+      const mockQuery = createMockMongooseQuery(null);
+      jest
+        .spyOn(userModel, 'findOne')
+        .mockReturnValueOnce(
+          mockQuery as unknown as Query<unknown, UserDocument>,
+        );
 
       // Override the service's create method to directly throw a ConflictException
-      const originalCreate = service.create;
-      service.create = jest.fn().mockImplementation(async () => {
+      const createSpy = jest.spyOn(service, 'create');
+      createSpy.mockImplementation(async () => {
         // Call the original method's first part to ensure the mocks are used
         await userModel.findOne({ email: createUserDto.email }).exec();
         await authService.hashPassword(createUserDto.password);
@@ -175,13 +211,15 @@ describe('UserCrudService', () => {
       await expect(service.create(createUserDto)).rejects.toThrow(
         ConflictException,
       );
-      expect(userModel.findOne).toHaveBeenCalledWith({
+      const findOneSpy = jest.spyOn(userModel, 'findOne');
+      expect(findOneSpy).toHaveBeenCalledWith({
         email: 'new@example.com',
       });
-      expect(authService.hashPassword).toHaveBeenCalledWith('password');
+      const hashPasswordSpy = jest.spyOn(authService, 'hashPassword');
+      expect(hashPasswordSpy).toHaveBeenCalledWith('password');
 
       // Restore the original method
-      service.create = originalCreate;
+      // No need to restore the original method when using spies
     });
 
     it('should handle other errors during user creation', async () => {
@@ -194,13 +232,16 @@ describe('UserCrudService', () => {
       };
 
       // Mock the findOne method to return null (user doesn't exist)
-      jest.spyOn(userModel, 'findOne').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(null),
-      } as any);
+      const mockQuery = createMockMongooseQuery(null);
+      jest
+        .spyOn(userModel, 'findOne')
+        .mockReturnValueOnce(
+          mockQuery as unknown as Query<unknown, UserDocument>,
+        );
 
       // Override the service's create method to directly throw an InternalServerErrorException
-      const originalCreate = service.create;
-      service.create = jest.fn().mockImplementation(async () => {
+      const createSpy = jest.spyOn(service, 'create');
+      createSpy.mockImplementation(async () => {
         // Call the original method's first part to ensure the mocks are used
         await userModel.findOne({ email: createUserDto.email }).exec();
         await authService.hashPassword(createUserDto.password);
@@ -213,13 +254,15 @@ describe('UserCrudService', () => {
       await expect(service.create(createUserDto)).rejects.toThrow(
         InternalServerErrorException,
       );
-      expect(userModel.findOne).toHaveBeenCalledWith({
+      const findOneSpy = jest.spyOn(userModel, 'findOne');
+      expect(findOneSpy).toHaveBeenCalledWith({
         email: 'new@example.com',
       });
-      expect(authService.hashPassword).toHaveBeenCalledWith('password');
+      const hashPasswordSpy = jest.spyOn(authService, 'hashPassword');
+      expect(hashPasswordSpy).toHaveBeenCalledWith('password');
 
       // Restore the original method
-      service.create = originalCreate;
+      // No need to restore the original method when using spies
     });
   });
 
@@ -230,16 +273,19 @@ describe('UserCrudService', () => {
       jest.spyOn(userModel, 'find').mockReturnValueOnce({
         select: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValueOnce(mockUsers),
-      } as any);
+      } as unknown as Query<unknown[], UserDocument>);
 
       // Act
       const result = await service.findAll();
 
       // Assert
-      expect(userModel.find).toHaveBeenCalled();
+      const findSpy = jest.spyOn(userModel, 'find');
+      expect(findSpy).toHaveBeenCalled();
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual(
-        expect.objectContaining(mockUserWithoutSensitiveFields),
+        expect.objectContaining<Record<string, unknown>>(
+          mockUserWithoutSensitiveFields,
+        ),
       );
       expect(result[0]).not.toHaveProperty('hashed_password');
       expect(result[0]).not.toHaveProperty('hashedRefreshToken');
@@ -252,15 +298,18 @@ describe('UserCrudService', () => {
       jest.spyOn(userModel, 'findById').mockReturnValueOnce({
         select: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValueOnce(mockUser),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act
       const result = await service.findById('user-id');
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith('user-id');
+      const findByIdSpy = jest.spyOn(userModel, 'findById');
+      expect(findByIdSpy).toHaveBeenCalledWith('user-id');
       expect(result).toEqual(
-        expect.objectContaining(mockUserWithoutSensitiveFields),
+        expect.objectContaining<Record<string, unknown>>(
+          mockUserWithoutSensitiveFields,
+        ),
       );
       expect(result).not.toHaveProperty('hashed_password');
       expect(result).not.toHaveProperty('hashedRefreshToken');
@@ -271,13 +320,14 @@ describe('UserCrudService', () => {
       jest.spyOn(userModel, 'findById').mockReturnValueOnce({
         select: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValueOnce(null),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act
       const result = await service.findById('nonexistent-id');
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith('nonexistent-id');
+      const findByIdSpy = jest.spyOn(userModel, 'findById');
+      expect(findByIdSpy).toHaveBeenCalledWith('nonexistent-id');
       expect(result).toBeNull();
     });
   });
@@ -287,13 +337,14 @@ describe('UserCrudService', () => {
       // Arrange
       jest.spyOn(userModel, 'findOne').mockReturnValueOnce({
         exec: jest.fn().mockResolvedValueOnce(mockUser),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act
       const result = await service.findOneByEmail('test@example.com');
 
       // Assert
-      expect(userModel.findOne).toHaveBeenCalledWith({
+      const findOneSpy = jest.spyOn(userModel, 'findOne');
+      expect(findOneSpy).toHaveBeenCalledWith({
         email: 'test@example.com',
       });
       expect(result).toEqual(mockUser);
@@ -303,13 +354,14 @@ describe('UserCrudService', () => {
       // Arrange
       jest.spyOn(userModel, 'findOne').mockReturnValueOnce({
         exec: jest.fn().mockResolvedValueOnce(null),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act
       const result = await service.findOneByEmail('nonexistent@example.com');
 
       // Assert
-      expect(userModel.findOne).toHaveBeenCalledWith({
+      const findOneSpy = jest.spyOn(userModel, 'findOne');
+      expect(findOneSpy).toHaveBeenCalledWith({
         email: 'nonexistent@example.com',
       });
       expect(result).toBeNull();
@@ -321,13 +373,14 @@ describe('UserCrudService', () => {
       // Arrange
       jest.spyOn(userModel, 'findById').mockReturnValueOnce({
         exec: jest.fn().mockResolvedValueOnce(mockUser),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act
       const result = await service.findUserByIdForAuth('user-id');
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith('user-id');
+      const findByIdSpy = jest.spyOn(userModel, 'findById');
+      expect(findByIdSpy).toHaveBeenCalledWith('user-id');
       expect(result).toEqual(mockUser);
     });
 
@@ -335,13 +388,14 @@ describe('UserCrudService', () => {
       // Arrange
       jest.spyOn(userModel, 'findById').mockReturnValueOnce({
         exec: jest.fn().mockResolvedValueOnce(null),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act
       const result = await service.findUserByIdForAuth('nonexistent-id');
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith('nonexistent-id');
+      const findByIdSpy = jest.spyOn(userModel, 'findById');
+      expect(findByIdSpy).toHaveBeenCalledWith('nonexistent-id');
       expect(result).toBeNull();
     });
   });
@@ -369,19 +423,20 @@ describe('UserCrudService', () => {
       jest.spyOn(userModel, 'findByIdAndUpdate').mockReturnValueOnce({
         select: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValueOnce(updatedUser),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act
       const result = await service.update('user-id', updateUserDto);
 
       // Assert
-      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+      const findByIdAndUpdateSpy = jest.spyOn(userModel, 'findByIdAndUpdate');
+      expect(findByIdAndUpdateSpy).toHaveBeenCalledWith(
         'user-id',
         updateUserDto,
         { new: true },
       );
       expect(result).toEqual(
-        expect.objectContaining({
+        expect.objectContaining<Record<string, unknown>>({
           _id: 'user-id',
           email: 'test@example.com',
           name: 'Updated User',
@@ -418,23 +473,25 @@ describe('UserCrudService', () => {
       jest.spyOn(userModel, 'findByIdAndUpdate').mockReturnValueOnce({
         select: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValueOnce(updatedUser),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act
       const result = await service.update('user-id', updateUserDto);
 
       // Assert
-      expect(authService.hashPassword).toHaveBeenCalledWith('new_password');
-      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+      const hashPasswordSpy = jest.spyOn(authService, 'hashPassword');
+      expect(hashPasswordSpy).toHaveBeenCalledWith('new_password');
+      const findByIdAndUpdateSpy = jest.spyOn(userModel, 'findByIdAndUpdate');
+      expect(findByIdAndUpdateSpy).toHaveBeenCalledWith(
         'user-id',
-        expect.objectContaining({
+        expect.objectContaining<Record<string, unknown>>({
           name: 'Updated User',
           password_hash: 'new_hashed_password',
         }),
         { new: true },
       );
       expect(result).toEqual(
-        expect.objectContaining({
+        expect.objectContaining<Record<string, unknown>>({
           _id: 'user-id',
           email: 'test@example.com',
           name: 'Updated User',
@@ -453,13 +510,14 @@ describe('UserCrudService', () => {
       jest.spyOn(userModel, 'findByIdAndUpdate').mockReturnValueOnce({
         select: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValueOnce(null),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act & Assert
       await expect(
         service.update('nonexistent-id', updateUserDto),
       ).rejects.toThrow(NotFoundException);
-      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+      const findByIdAndUpdateSpy = jest.spyOn(userModel, 'findByIdAndUpdate');
+      expect(findByIdAndUpdateSpy).toHaveBeenCalledWith(
         'nonexistent-id',
         updateUserDto,
         { new: true },
@@ -472,13 +530,14 @@ describe('UserCrudService', () => {
       // Arrange
       jest.spyOn(userModel, 'findByIdAndDelete').mockReturnValueOnce({
         exec: jest.fn().mockResolvedValueOnce(mockUser),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act
       const result = await service.remove('user-id');
 
       // Assert
-      expect(userModel.findByIdAndDelete).toHaveBeenCalledWith('user-id');
+      const findByIdAndDeleteSpy = jest.spyOn(userModel, 'findByIdAndDelete');
+      expect(findByIdAndDeleteSpy).toHaveBeenCalledWith('user-id');
       expect(result).toEqual({ deleted: true });
     });
 
@@ -486,15 +545,14 @@ describe('UserCrudService', () => {
       // Arrange
       jest.spyOn(userModel, 'findByIdAndDelete').mockReturnValueOnce({
         exec: jest.fn().mockResolvedValueOnce(null),
-      } as any);
+      } as unknown as Query<unknown, UserDocument>);
 
       // Act & Assert
       await expect(service.remove('nonexistent-id')).rejects.toThrow(
         NotFoundException,
       );
-      expect(userModel.findByIdAndDelete).toHaveBeenCalledWith(
-        'nonexistent-id',
-      );
+      const findByIdAndDeleteSpy = jest.spyOn(userModel, 'findByIdAndDelete');
+      expect(findByIdAndDeleteSpy).toHaveBeenCalledWith('nonexistent-id');
     });
   });
 });

@@ -33,7 +33,8 @@ describe('AppController', () => {
       const result = appController.getHello(mockI18n);
 
       expect(result).toBe('Hello NestJS User, how are you?');
-      expect(mockI18n.t).toHaveBeenCalledWith('translation.HELLO', {
+      const tSpy = jest.spyOn(mockI18n, 't');
+      expect(tSpy).toHaveBeenCalledWith('translation.HELLO', {
         args: { name: 'NestJS User' },
       });
     });
@@ -52,7 +53,8 @@ describe('AppController', () => {
       const result = appController.getHelloJa(mockI18n);
 
       expect(result).toBe('こんにちは NestJSユーザー さん、お元気ですか？');
-      expect(mockI18n.t).toHaveBeenCalledWith('translation.HELLO', {
+      const tSpy = jest.spyOn(mockI18n, 't');
+      expect(tSpy).toHaveBeenCalledWith('translation.HELLO', {
         args: { name: 'NestJSユーザー' },
         lang: 'ja',
       });

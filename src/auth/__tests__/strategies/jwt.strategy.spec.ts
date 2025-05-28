@@ -73,7 +73,8 @@ describe('JwtStrategy', () => {
       const result = await strategy.validate(payload);
 
       // Assert
-      expect(usersService.findById).toHaveBeenCalledWith('user-id');
+      const findByIdSpy = jest.spyOn(usersService, 'findById');
+      expect(findByIdSpy).toHaveBeenCalledWith('user-id');
       expect(result).toEqual({
         userId: 'user-id',
         email: 'test@example.com',
@@ -90,7 +91,8 @@ describe('JwtStrategy', () => {
       await expect(strategy.validate(payload)).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(usersService.findById).toHaveBeenCalledWith('nonexistent-id');
+      const findByIdSpy = jest.spyOn(usersService, 'findById');
+      expect(findByIdSpy).toHaveBeenCalledWith('nonexistent-id');
     });
   });
 

@@ -11,7 +11,10 @@ export const LOG_ACTIVITY_METADATA = 'log_activity_metadata';
 /**
  * Type definition for the details function
  */
-export type DetailsFunction = (args: any[], result: any) => Record<string, any>;
+export type DetailsFunction = (
+  args: unknown[],
+  result: unknown,
+) => Record<string, unknown>;
 
 /**
  * Options for the LogActivity decorator
@@ -19,17 +22,20 @@ export type DetailsFunction = (args: any[], result: any) => Record<string, any>;
 export interface LogActivityOptions {
   actionType: string;
   resourceType: string;
-  getResourceId?: (args: any[]) => string | undefined;
-  getResourceName?: (args: any[]) => string | undefined;
-  getEntitySnapshot?: (args: any[], result: any) => Record<string, any>;
-  getInputPayload?: (args: any[]) => Record<string, any>;
+  getResourceId?: (args: unknown[]) => string | undefined;
+  getResourceName?: (args: unknown[]) => string | undefined;
+  getEntitySnapshot?: (
+    args: unknown[],
+    result: unknown,
+  ) => Record<string, unknown>;
+  getInputPayload?: (args: unknown[]) => Record<string, unknown>;
   getChangedFields?: (
-    args: any[],
-    result: any,
+    args: unknown[],
+    result: unknown,
   ) => Array<{
     field: string;
-    oldValue: any;
-    newValue: any;
+    oldValue: unknown;
+    newValue: unknown;
   }>;
 }
 
@@ -39,29 +45,43 @@ export interface LogActivityOptions {
  */
 export function LogActivity(options: LogActivityOptions) {
   return function (
-    target: any,
+    target: object,
     propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
     // Store metadata on the method
     Reflect.defineMetadata(LOG_ACTIVITY_METADATA, options, target, propertyKey);
 
-    const originalMethod = descriptor.value;
+    const originalMethod = descriptor.value as (
+      ...args: unknown[]
+    ) => Promise<unknown>;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (
+      this: {
+        activityLogService?: {
+          logActivity: (params: {
+            userId: string;
+            action: string;
+            resource: string;
+            details: Record<string, unknown>;
+          }) => Promise<void>;
+        };
+      },
+      ...args: unknown[]
+    ) {
       // Try to find the ActivityLogService in the class instance
       const activityLogService = this.activityLogService;
 
       if (!activityLogService) {
         logger.warn(
-          `ActivityLogService not found in ${target.constructor.name}. Activity will not be logged.`,
+          `ActivityLogService not found in ${(target as { constructor: { name: string } }).constructor.name}. Activity will not be logged.`,
         );
-        return originalMethod.apply(this, args);
+        return originalMethod.apply(this, args) as unknown;
       }
 
       try {
         // Execute the original method
-        const result = await originalMethod.apply(this, args);
+        const result = (await originalMethod.apply(this, args)) as unknown;
 
         // Try to find userId in the first argument or from the options
         const userId =
@@ -74,7 +94,7 @@ export function LogActivity(options: LogActivityOptions) {
         // Only log if we have a userId
         if (userId) {
           // Prepare details
-          let details: Record<string, any> = {};
+          let details: Record<string, unknown> = {};
 
           if (options.getEntitySnapshot) {
             details.entitySnapshot = options.getEntitySnapshot(args, result);

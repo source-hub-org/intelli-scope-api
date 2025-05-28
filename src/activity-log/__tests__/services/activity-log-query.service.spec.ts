@@ -61,23 +61,25 @@ describe('ActivityLogQueryService', () => {
       // Arrange
       const filter = { userId: 'user-id' };
 
-      jest.spyOn(activityLogModel, 'find').mockReturnValueOnce({
+      const findSpy = jest.spyOn(activityLogModel, 'find').mockReturnValueOnce({
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValueOnce(mockActivityLogs),
       } as any);
 
-      jest.spyOn(activityLogModel, 'countDocuments').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(2),
-      } as any);
+      const countSpy = jest
+        .spyOn(activityLogModel, 'countDocuments')
+        .mockReturnValueOnce({
+          exec: jest.fn().mockResolvedValueOnce(2),
+        } as any);
 
       // Act
       const result = await service.queryLogs(filter);
 
       // Assert
-      expect(activityLogModel.find).toHaveBeenCalledWith(filter);
-      expect(activityLogModel.countDocuments).toHaveBeenCalledWith(filter);
+      expect(findSpy).toHaveBeenCalledWith(filter);
+      expect(countSpy).toHaveBeenCalledWith(filter);
       expect(result).toEqual({
         data: mockActivityLogs,
         meta: {
@@ -94,23 +96,25 @@ describe('ActivityLogQueryService', () => {
       const filter = { userId: 'user-id' };
       const options = { page: 2, limit: 5, sort: { timestamp: -1 as -1 } };
 
-      jest.spyOn(activityLogModel, 'find').mockReturnValueOnce({
+      const findSpy = jest.spyOn(activityLogModel, 'find').mockReturnValueOnce({
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValueOnce(mockActivityLogs),
       } as any);
 
-      jest.spyOn(activityLogModel, 'countDocuments').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(12),
-      } as any);
+      const countSpy = jest
+        .spyOn(activityLogModel, 'countDocuments')
+        .mockReturnValueOnce({
+          exec: jest.fn().mockResolvedValueOnce(12),
+        } as any);
 
       // Act
       const result = await service.queryLogs(filter, options);
 
       // Assert
-      expect(activityLogModel.find).toHaveBeenCalledWith(filter);
-      expect(activityLogModel.countDocuments).toHaveBeenCalledWith(filter);
+      expect(findSpy).toHaveBeenCalledWith(filter);
+      expect(countSpy).toHaveBeenCalledWith(filter);
       expect(result).toEqual({
         data: mockActivityLogs,
         meta: {
@@ -126,23 +130,25 @@ describe('ActivityLogQueryService', () => {
       // Arrange
       const filter = { userId: 'nonexistent-id' };
 
-      jest.spyOn(activityLogModel, 'find').mockReturnValueOnce({
+      const findSpy = jest.spyOn(activityLogModel, 'find').mockReturnValueOnce({
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValueOnce([]),
       } as any);
 
-      jest.spyOn(activityLogModel, 'countDocuments').mockReturnValueOnce({
-        exec: jest.fn().mockResolvedValueOnce(0),
-      } as any);
+      const countSpy = jest
+        .spyOn(activityLogModel, 'countDocuments')
+        .mockReturnValueOnce({
+          exec: jest.fn().mockResolvedValueOnce(0),
+        } as any);
 
       // Act
       const result = await service.queryLogs(filter);
 
       // Assert
-      expect(activityLogModel.find).toHaveBeenCalledWith(filter);
-      expect(activityLogModel.countDocuments).toHaveBeenCalledWith(filter);
+      expect(findSpy).toHaveBeenCalledWith(filter);
+      expect(countSpy).toHaveBeenCalledWith(filter);
       expect(result).toEqual({
         data: [],
         meta: {

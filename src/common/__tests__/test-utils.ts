@@ -17,17 +17,52 @@ export async function createTestingModule(
  * @param mockData Mock data to be returned by the model methods
  * @returns Mocked Mongoose Model
  */
-export function createMockModel(mockData: any = {}) {
-  const mockModel = function () {
+export function createMockModel<T = unknown>(mockData: T = {} as T) {
+  // Define a type for the mock model to avoid 'any' returns
+  type MockMongooseModel = {
+    [key: string]: any;
+    new: jest.Mock;
+    constructor: jest.Mock;
+    find: jest.Mock;
+    findOne: jest.Mock;
+    findById: jest.Mock;
+    findByIdAndUpdate: jest.Mock;
+    findByIdAndDelete: jest.Mock;
+    save: jest.Mock;
+    create: jest.Mock;
+    countDocuments: jest.Mock;
+    populate: jest.Mock;
+    skip: jest.Mock;
+    limit: jest.Mock;
+    sort: jest.Mock;
+    exec: jest.Mock;
+    prototype: { save: jest.Mock };
+  };
+
+  // Define a type for the constructor function context
+  interface MockModelInstance {
+    data: T;
+    save: jest.Mock;
+  }
+
+  const mockModel = function (this: MockModelInstance) {
     this.data = mockData;
     this.save = jest.fn().mockResolvedValue(mockData);
-  };
+  } as unknown as MockMongooseModel;
 
   mockModel.prototype = {
     save: jest.fn().mockResolvedValue(mockData),
   };
 
-  mockModel.new = jest.fn().mockImplementation(() => new mockModel());
+  // Create a safe constructor function that returns a properly typed instance
+  mockModel.new = jest.fn().mockImplementation((): T => {
+    // We need to use type assertions here because we're dealing with a complex mock structure
+    // This is a deliberate workaround for testing purposes
+    return {
+      data: mockData,
+      save: jest.fn().mockResolvedValue(mockData),
+    } as unknown as T;
+  });
   mockModel.constructor = jest.fn().mockResolvedValue(mockData);
   mockModel.find = jest.fn().mockReturnValue({
     exec: jest
@@ -75,10 +110,12 @@ export function createMockModel(mockData: any = {}) {
  */
 export function createMockI18nService() {
   return {
-    t: jest.fn().mockImplementation((key: string, options?: any) => {
-      // Return the key as the translation for simplicity in tests
-      return `translated:${key}`;
-    }),
+    t: jest
+      .fn()
+      .mockImplementation((key: string, _options?: Record<string, unknown>) => {
+        // Return the key as the translation for simplicity in tests
+        return `translated:${key}`;
+      }),
   };
 }
 
@@ -88,10 +125,12 @@ export function createMockI18nService() {
  */
 export function createMockI18nContext() {
   return {
-    t: jest.fn().mockImplementation((key: string, options?: any) => {
-      // Return the key as the translation for simplicity in tests
-      return `translated:${key}`;
-    }),
+    t: jest
+      .fn()
+      .mockImplementation((key: string, _options?: Record<string, unknown>) => {
+        // Return the key as the translation for simplicity in tests
+        return `translated:${key}`;
+      }),
     lang: 'en',
     current: jest.fn().mockReturnValue({ lang: 'en' }),
   };
@@ -102,13 +141,17 @@ export function createMockI18nContext() {
  * @param configValues Configuration values to be returned
  * @returns Mocked ConfigService
  */
-export function createMockConfigService(
-  configValues: Record<string, any> = {},
+export function createMockConfigService<T = Record<string, unknown>>(
+  configValues: T = {} as T,
 ) {
   return {
-    get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
-      return key in configValues ? configValues[key] : defaultValue;
-    }),
+    get: jest
+      .fn()
+      .mockImplementation((key: string, defaultValue?: unknown): unknown => {
+        return key in (configValues as Record<string, unknown>)
+          ? (configValues as Record<string, unknown>)[key]
+          : defaultValue;
+      }),
   };
 }
 
@@ -133,11 +176,11 @@ export function createMockJwtService() {
  * @returns Mocked ClsService
  */
 export function createMockClsService() {
-  const store: Record<string, any> = {};
+  const store: Record<string, unknown> = {};
 
   return {
-    get: jest.fn().mockImplementation((key: string) => store[key]),
-    set: jest.fn().mockImplementation((key: string, value: any) => {
+    get: jest.fn().mockImplementation((key: string): unknown => store[key]),
+    set: jest.fn().mockImplementation((key: string, value: unknown) => {
       store[key] = value;
     }),
     getId: jest.fn().mockReturnValue('mock-request-id'),
@@ -149,7 +192,7 @@ export function createMockClsService() {
  * @param overrides Properties to override in the mock request
  * @returns Mocked Request object
  */
-export function createMockRequest(overrides: Record<string, any> = {}) {
+export function createMockRequest(overrides: Record<string, unknown> = {}) {
   const req = {
     url: '/api/test',
     method: 'GET',
@@ -170,7 +213,14 @@ export function createMockRequest(overrides: Record<string, any> = {}) {
  * @returns Mocked Response object
  */
 export function createMockResponse() {
-  const res: any = {};
+  type MockResponse = {
+    status: jest.Mock;
+    json: jest.Mock;
+    send: jest.Mock;
+    [key: string]: unknown;
+  };
+
+  const res = {} as MockResponse;
 
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
@@ -184,10 +234,15 @@ export function createMockResponse() {
  * @param data Document data
  * @returns Mocked document
  */
-export function createMockDocument(data: any) {
+export function createMockDocument<T = unknown>(data: T) {
+  type MockDocument<D> = D & {
+    toObject: jest.Mock;
+    toJSON: jest.Mock;
+  };
+
   return {
     ...data,
     toObject: jest.fn().mockReturnValue(data),
     toJSON: jest.fn().mockReturnValue(data),
-  };
+  } as MockDocument<T>;
 }
